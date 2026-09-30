@@ -29,9 +29,10 @@ from homeassistant.helpers.reload import async_setup_reload_service
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
-from . import DOMAIN, PLATFORMS
+from . import PLATFORMS
 from .util import get_value_key
-from .const import (CONF_ADDITIONAL_MODES,
+from .const import (DOMAIN,
+                    CONF_ADDITIONAL_MODES,
                     CONF_POWER,
                     CONF_POWER_THRESHOLD,
                     CONF_PRESET,
@@ -40,7 +41,7 @@ from .const import (CONF_ADDITIONAL_MODES,
                     PRESET_COMFORT_1,
                     PRESET_COMFORT_2,
                     CONF_DEFAULT_PRESET,
-                    DEFAULT_DEFAULT_PRESET, VALUE_COMFORT, VALUE_COMFORT_1, VALUE_COMFORT_2, VALUE_ECO, VALUE_FROST, VALUE_OFF, VALUES_MAPPING)
+                    DEFAULT_DEFAULT_PRESET, VALUE_COMFORT, VALUE_COMFORT_1, VALUE_COMFORT_2, VALUE_ECO, VALUE_FROST, VALUE_OFF)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -259,12 +260,9 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             | ClimateEntityFeature.TURN_ON
         )
 
-    def update(self) -> None:
-        """Update unit attributes."""
-
     @property
-    def hvac_action(self) -> str:
-        """Return the unit of measurement."""
+    def hvac_action(self) -> HVACAction | None:
+        """Return the current running hvac operation."""
         value = None
         if self._cur_power is not None:
             if self._cur_power > self.power_threshold:
@@ -276,8 +274,8 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         return value
 
     @property
-    def power_threshold(self) -> str:
-        """Return the unit of measurement."""
+    def power_threshold(self) -> float:
+        """Return the power above which the heater counts as heating."""
         return 0 if self._power_threshold is None else self._power_threshold
 
     @property
@@ -349,7 +347,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         self.async_write_ha_state()
 
     async def _async_power_changed(self, event: Event[EventStateChangedData]) -> None:
-        """Handle temperature changes."""
+        """Handle power changes."""
         new_state = event.data["new_state"]
         if new_state is None or new_state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
             return
@@ -368,11 +366,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
 
     @callback
     def _async_update_mode(self, state: State):
-        try:
-            cur_mode = str(state.state)
-            self._cur_mode = cur_mode
-        except ValueError as ex:
-            _LOGGER.error("Unable to update from mode sensor: %s", ex)
+        self._cur_mode = state.state
 
     @callback
     def _async_update_temp(self, state: State):
@@ -392,7 +386,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
                 raise ValueError(f"Sensor has illegal state {state.state}")
             self._cur_power = cur_power
         except ValueError as ex:
-            _LOGGER.error("Unable to update from temperature sensor: %s", ex)
+            _LOGGER.error("Unable to update from power sensor: %s", ex)
 
     async def _async_set_mode_value(self, value):
         data = {

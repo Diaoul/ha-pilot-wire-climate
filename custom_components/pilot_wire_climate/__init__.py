@@ -9,7 +9,7 @@ from homeassistant.helpers.device import async_entity_id_to_device_id
 from homeassistant.helpers.event import async_track_entity_registry_updated_event
 from homeassistant.helpers.helper_integration import (
     async_handle_source_entity_changes, async_remove_helper_devices)
-from .const import CONF_DEFAULT_PRESET, CONF_POWER, CONF_PRESET, CONF_TEMP, DEFAULT_DEFAULT_PRESET, DOMAIN, VALUES_MAPPING, OLD_PRESET_VALUE_MAPPING
+from .const import CONF_DEFAULT_PRESET, CONF_POWER, CONF_PRESET, CONF_TEMP, DEFAULT_DEFAULT_PRESET, VALUES_MAPPING, OLD_PRESET_VALUE_MAPPING
 
 PLATFORMS = [Platform.CLIMATE]
 _LOGGER = logging.getLogger(__name__)
