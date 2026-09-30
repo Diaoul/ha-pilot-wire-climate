@@ -48,3 +48,40 @@ async def test_migration_maps_old_default_preset(hass: HomeAssistant, select_ent
 
     assert entry.options["default_preset"] == "frost_protection"
     assert entry.minor_version == 3
+
+
+async def test_follows_select_rename(hass: HomeAssistant, select_entity):
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+
+    er.async_get(hass).async_update_entity(
+        SELECT, new_entity_id="select.renamed")
+    hass.states.async_set("select.renamed", "eco",
+                          {"options": ["off", "eco", "comfort"]})
+    await hass.async_block_till_done()
+
+    assert entry.options["presets"] == "select.renamed"
+    [entity] = er.async_entries_for_config_entry(
+        er.async_get(hass), entry.entry_id)
+    assert hass.states.get(entity.entity_id).attributes["preset_mode"] == "eco"
+
+
+async def test_follows_sensor_rename(hass: HomeAssistant, select_entity, source_entry):
+    registry = er.async_get(hass)
+    for sensor in ("temperature", "power"):
+        registry.async_get_or_create(
+            "sensor", "test", sensor, config_entry=source_entry,
+            suggested_object_id=f"heater_{sensor}")
+    entry = helper_entry(temperature="sensor.heater_temperature",
+                         power="sensor.heater_power")
+    await setup_helper(hass, entry)
+
+    registry.async_update_entity(
+        "sensor.heater_temperature", new_entity_id="sensor.new_temperature")
+    await hass.async_block_till_done()
+    registry.async_update_entity(
+        "sensor.heater_power", new_entity_id="sensor.new_power")
+    await hass.async_block_till_done()
+
+    assert entry.options["temperature"] == "sensor.new_temperature"
+    assert entry.options["power"] == "sensor.new_power"
