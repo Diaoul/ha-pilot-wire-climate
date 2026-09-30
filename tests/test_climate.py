@@ -84,3 +84,16 @@ async def test_select_unavailable(hass: HomeAssistant, select_entity):
     assert hass.states.get(entity_id).attributes["preset_mode"] is None
     with pytest.raises(HomeAssistantError):
         await call(hass, "set_hvac_mode", entity_id, hvac_mode="heat")
+
+
+async def test_input_select_source(hass: HomeAssistant):
+    hass.states.async_set("input_select.heater_mode",
+                          "comfort", {"options": SIX_OPTIONS})
+    entry = helper_entry(presets="input_select.heater_mode")
+    await setup_helper(hass, entry)
+    calls = async_mock_service(hass, "input_select", "select_option")
+
+    await call(hass, "set_preset_mode", climate_entity_id(hass, entry), preset_mode="eco")
+
+    assert [(c.data["entity_id"], c.data["option"]) for c in calls] == [
+        ("input_select.heater_mode", "eco")]

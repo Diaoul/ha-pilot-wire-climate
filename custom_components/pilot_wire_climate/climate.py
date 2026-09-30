@@ -12,14 +12,14 @@ from homeassistant.components.climate import (PRESET_AWAY, PRESET_COMFORT,
                                               ClimateEntity,
                                               ClimateEntityFeature, HVACAction,
                                               HVACMode)
-from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.components.select import ATTR_OPTIONS, SERVICE_SELECT_OPTION
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (ATTR_ENTITY_ID, CONF_NAME, CONF_UNIQUE_ID,
                                  EVENT_HOMEASSISTANT_START, STATE_UNAVAILABLE,
                                  STATE_UNKNOWN, UnitOfTemperature)
 from homeassistant.core import (CoreState, Event, EventStateChangedData,
-                                HomeAssistant, State, callback)
+                                HomeAssistant, State, callback,
+                                split_entity_id)
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device import async_entity_id_to_device
@@ -399,4 +399,5 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             ATTR_ENTITY_ID: self.preset_entity_id,
             "option": value,
         }
-        await self.hass.services.async_call(SELECT_DOMAIN, SERVICE_SELECT_OPTION, data)
+        await self.hass.services.async_call(
+            split_entity_id(self.preset_entity_id)[0], SERVICE_SELECT_OPTION, data)
