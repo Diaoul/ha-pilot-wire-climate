@@ -1,0 +1,86 @@
+import pytest
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
+from pytest_homeassistant_custom_component.common import async_mock_service
+
+from .conftest import (FOUR_OPTIONS, SELECT, SIX_OPTIONS, climate_entity_id,
+                       helper_entry, setup_helper)
+
+
+async def call(hass: HomeAssistant, service: str, entity_id: str, **data) -> None:
+    await hass.services.async_call(
+        "climate", service, {"entity_id": entity_id, **data}, blocking=True)
+
+
+@pytest.mark.parametrize("additional_modes", [True, False])
+async def test_select_without_comfort_minus_options(hass: HomeAssistant, select_entity, additional_modes):
+    hass.states.async_set(SELECT, "comfort", {"options": FOUR_OPTIONS})
+    entry = helper_entry(additional_modes=additional_modes)
+    await setup_helper(hass, entry)
+
+    state = hass.states.get(climate_entity_id(hass, entry))
+    assert state.state == "heat"
+    assert state.attributes["preset_mode"] == "comfort"
+
+
+async def test_preset_follows_select(hass: HomeAssistant, select_entity):
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+    entity_id = climate_entity_id(hass, entry)
+
+    for option, preset in [("off", "none"), ("frost_protection", "away"), ("eco", "eco"),
+                           ("comfort_-1", "comfort_1"), ("comfort_-2", "comfort_2")]:
+        hass.states.async_set(SELECT, option, {"options": SIX_OPTIONS})
+        await hass.async_block_till_done()
+        assert hass.states.get(entity_id).attributes["preset_mode"] == preset
+
+
+async def test_comfort_minus_is_comfort_without_additional_modes(hass: HomeAssistant, select_entity):
+    hass.states.async_set(SELECT, "comfort_-1", {"options": SIX_OPTIONS})
+    entry = helper_entry(additional_modes=False)
+    await setup_helper(hass, entry)
+
+    assert hass.states.get(climate_entity_id(hass, entry)
+                           ).attributes["preset_mode"] == "comfort"
+
+
+async def test_set_preset_selects_matching_option(hass: HomeAssistant, select_entity):
+    options = ["Off", "FrostProtection", "Eco",
+               "Comfort", "ComfortMinus1", "ComfortMinus2"]
+    hass.states.async_set(SELECT, "Comfort", {"options": options})
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+    calls = async_mock_service(hass, "select", "select_option")
+    entity_id = climate_entity_id(hass, entry)
+
+    await call(hass, "set_preset_mode", entity_id, preset_mode="comfort_2")
+    await call(hass, "set_hvac_mode", entity_id, hvac_mode="heat")
+    await call(hass, "set_hvac_mode", entity_id, hvac_mode="off")
+
+    assert [c.data["option"] for c in calls] == ["ComfortMinus2", "Eco", "Off"]
+
+
+async def test_options_are_read_when_used(hass: HomeAssistant, select_entity):
+    hass.states.async_set(SELECT, "comfort", {"options": FOUR_OPTIONS})
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+    calls = async_mock_service(hass, "select", "select_option")
+    entity_id = climate_entity_id(hass, entry)
+
+    with pytest.raises(HomeAssistantError):
+        await call(hass, "set_preset_mode", entity_id, preset_mode="comfort_1")
+
+    hass.states.async_set(SELECT, "comfort", {"options": SIX_OPTIONS})
+    await call(hass, "set_preset_mode", entity_id, preset_mode="comfort_1")
+    assert calls[-1].data["option"] == "comfort_-1"
+
+
+async def test_select_unavailable(hass: HomeAssistant, select_entity):
+    hass.states.async_remove(SELECT)
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+    entity_id = climate_entity_id(hass, entry)
+
+    assert hass.states.get(entity_id).attributes["preset_mode"] is None
+    with pytest.raises(HomeAssistantError):
+        await call(hass, "set_hvac_mode", entity_id, hvac_mode="heat")
