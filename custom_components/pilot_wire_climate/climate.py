@@ -351,6 +351,10 @@ class PilotWireClimate(ClimateEntity):
     @callback
     def _async_update_mode(self, state: State | None):
         self._cur_mode = None if _is_missing(state) else state.state
+        if self._cur_mode is not None and get_value_key(self._cur_mode) is None:
+            _LOGGER.warning(
+                "%s reports unknown pilot wire mode %s, shown as comfort",
+                self.preset_entity_id, self._cur_mode)
 
     @callback
     def _async_update_temp(self, state: State | None):

@@ -241,3 +241,15 @@ async def test_temperature_unit_from_sensor(hass: HomeAssistant, select_entity):
 
     assert hass.states.get(climate_entity_id(hass, entry)
                            ).attributes["current_temperature"] == 20
+
+
+async def test_unknown_mode_is_logged(hass: HomeAssistant, select_entity, caplog):
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+
+    hass.states.async_set(SELECT, "turbo", {"options": [*SIX_OPTIONS, "turbo"]})
+    await hass.async_block_till_done()
+
+    assert hass.states.get(climate_entity_id(hass, entry)
+                           ).attributes["preset_mode"] == "comfort"
+    assert "unknown pilot wire mode turbo" in caplog.text
