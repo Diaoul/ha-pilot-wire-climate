@@ -2,6 +2,7 @@
 
 import logging
 import math
+from typing import Any, override
 
 from homeassistant.components.climate import (
     PLATFORM_SCHEMA as CLIMATE_PLATFORM_SCHEMA,
@@ -134,12 +135,12 @@ async def _async_setup_config(
 ) -> None:
     """Set up the pilot wire climate platform."""
     name: str | None = config.get(CONF_NAME)
-    preset_entity_id: str = config.get(CONF_PRESET)
+    preset_entity_id: str = config[CONF_PRESET]
     temp_entity_id: str | None = config.get(CONF_TEMP)
     power_entity_id: str | None = config.get(CONF_POWER)
-    additional_modes: bool = config.get(CONF_ADDITIONAL_MODES)
-    power_threshold: float = config.get(CONF_POWER_THRESHOLD)
-    default_preset: str | None = config.get(CONF_DEFAULT_PRESET)
+    additional_modes: bool = config[CONF_ADDITIONAL_MODES]
+    power_threshold: float = config.get(CONF_POWER_THRESHOLD, 0)
+    default_preset: str = config[CONF_DEFAULT_PRESET]
 
     async_add_entities(
         [
@@ -166,8 +167,11 @@ def _finite_float(value: str) -> float | None:
     return number if math.isfinite(number) else None
 
 
-def _is_missing(state: State | None) -> bool:
-    return state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN)
+def _value(state: State) -> str | None:
+    """Return the state, or None while the entity is unavailable or unknown."""
+    if state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+        return None
+    return state.state
 
 
 class PilotWireClimate(ClimateEntity):
@@ -210,14 +214,15 @@ class PilotWireClimate(ClimateEntity):
         self.power_entity_id = power_entity_id
         self.additional_modes = additional_modes
         self._power_threshold = power_threshold
-        self._cur_temperature = None
-        self._cur_power = None
-        self._cur_mode = None
+        self._cur_temperature: float | None = None
+        self._cur_power: float | None = None
+        self._cur_mode: str | None = None
         self._default_preset = default_preset
 
         self._attr_has_entity_name = has_entity_name
         self._attr_unique_id = unique_id or "pilot_wire_" + preset_entity_id
 
+    @override
     async def async_added_to_hass(self) -> None:
         """Run when entity about to be added."""
         await super().async_added_to_hass()
@@ -261,18 +266,20 @@ class PilotWireClimate(ClimateEntity):
     def _get_option(self, value: str) -> str:
         """Return the select option standing for a pilot wire value."""
         state = self.hass.states.get(self.preset_entity_id)
-        options = state.attributes.get(ATTR_OPTIONS) if state else None
-        for option in options or ():
+        options: list[str] = state.attributes.get(ATTR_OPTIONS, []) if state else []
+        for option in options:
             if get_value_key(option) == value:
                 return option
         raise HomeAssistantError(f"{self.preset_entity_id} has no option for {value}")
 
+    @override
     @property
     def available(self) -> bool:
         """Return whether the select driving the heater is available."""
         state = self.hass.states.get(self.preset_entity_id)
         return state is not None and state.state != STATE_UNAVAILABLE
 
+    @override
     @property
     def supported_features(self) -> ClimateEntityFeature:
         """Return the list of supported features."""
@@ -282,6 +289,7 @@ class PilotWireClimate(ClimateEntity):
             | ClimateEntityFeature.TURN_ON
         )
 
+    @override
     @property
     def hvac_action(self) -> HVACAction | None:
         """Return the current running hvac operation."""
@@ -298,8 +306,9 @@ class PilotWireClimate(ClimateEntity):
     @property
     def power_threshold(self) -> float:
         """Return the power above which the heater counts as heating."""
-        return 0 if self._power_threshold is None else self._power_threshold
+        return self._power_threshold
 
+    @override
     @property
     def current_temperature(self) -> float | None:
         """Return the sensor temperature."""
@@ -307,8 +316,9 @@ class PilotWireClimate(ClimateEntity):
 
     # Presets
 
+    @override
     @property
-    def preset_modes(self) -> list[str] | None:
+    def preset_modes(self) -> list[str]:
         """List of available preset modes."""
         if self.additional_modes:
             return [
@@ -321,27 +331,31 @@ class PilotWireClimate(ClimateEntity):
             ]
         return [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY, PRESET_NONE]
 
+    @override
     @property
     def preset_mode(self) -> str | None:
         """Preset current mode."""
         if self._cur_mode is None:
             return None
-        preset = VALUE_TO_PRESET.get(get_value_key(self._cur_mode))
-        if preset is None or preset not in self.preset_modes:
+        if (value := get_value_key(self._cur_mode)) is None:
             return PRESET_COMFORT
-        return preset
+        preset = VALUE_TO_PRESET[value]
+        return preset if preset in self.preset_modes else PRESET_COMFORT
 
+    @override
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set preset mode."""
         await self._async_set_mode_value(self._get_option(PRESET_TO_VALUE[preset_mode]))
 
     # Modes
 
+    @override
     @property
     def hvac_modes(self) -> list[HVACMode]:
         """List of available operation modes."""
         return [HVACMode.HEAT, HVACMode.OFF]
 
+    @override
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
         if hvac_mode == self.hvac_mode:
@@ -350,6 +364,7 @@ class PilotWireClimate(ClimateEntity):
         value = self._default_preset if hvac_mode == HVACMode.HEAT else VALUE_OFF
         await self._async_set_mode_value(self._get_option(value))
 
+    @override
     @property
     def hvac_mode(self) -> HVACMode | None:
         """Return hvac operation ie. heat, off mode."""
@@ -376,8 +391,8 @@ class PilotWireClimate(ClimateEntity):
         self.async_write_ha_state()
 
     @callback
-    def _async_update_mode(self, state: State | None):
-        self._cur_mode = None if _is_missing(state) else state.state
+    def _async_update_mode(self, state: State | None) -> None:
+        self._cur_mode = None if state is None else _value(state)
         if self._cur_mode is not None and get_value_key(self._cur_mode) is None:
             _LOGGER.warning(
                 "%s reports unknown pilot wire mode %s, shown as comfort",
@@ -386,12 +401,12 @@ class PilotWireClimate(ClimateEntity):
             )
 
     @callback
-    def _async_update_temp(self, state: State | None):
-        if _is_missing(state):
+    def _async_update_temp(self, state: State | None) -> None:
+        if state is None or (raw := _value(state)) is None:
             self._cur_temperature = None
             return
-        if (value := _finite_float(state.state)) is None:
-            _LOGGER.error("Unable to update from temperature sensor: %s", state.state)
+        if (value := _finite_float(raw)) is None:
+            _LOGGER.error("Unable to update from temperature sensor: %s", raw)
             return
         self._cur_temperature = value
         unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
@@ -399,17 +414,17 @@ class PilotWireClimate(ClimateEntity):
             self._attr_temperature_unit = unit
 
     @callback
-    def _async_update_power(self, state: State | None):
-        if _is_missing(state):
+    def _async_update_power(self, state: State | None) -> None:
+        if state is None or (raw := _value(state)) is None:
             self._cur_power = None
             return
-        if (value := _finite_float(state.state)) is None:
-            _LOGGER.error("Unable to update from power sensor: %s", state.state)
+        if (value := _finite_float(raw)) is None:
+            _LOGGER.error("Unable to update from power sensor: %s", raw)
             return
         self._cur_power = value
 
-    async def _async_set_mode_value(self, value):
-        data = {
+    async def _async_set_mode_value(self, value: str) -> None:
+        data: dict[str, Any] = {
             ATTR_ENTITY_ID: self.preset_entity_id,
             "option": value,
         }

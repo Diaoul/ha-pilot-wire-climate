@@ -1,7 +1,7 @@
 """Config flow for Pilot Wire thermostat."""
 
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, override
 
 from homeassistant.components.input_select import DOMAIN as INPUT_SELECT_DOMAIN
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
@@ -11,6 +11,7 @@ from homeassistant.helpers.schema_config_entry_flow import (
     SchemaConfigFlowHandler,
     SchemaFlowFormStep,
 )
+from homeassistant.helpers.typing import VolDictType
 import voluptuous as vol
 
 from .const import (
@@ -30,7 +31,7 @@ from .const import (
 )
 from .util import config_entry_title
 
-OPTIONS_SCHEMA = {
+OPTIONS_SCHEMA: VolDictType = {
     vol.Optional(CONF_TEMP): selector.EntitySelector(
         selector.EntitySelectorConfig(
             domain=SENSOR_DOMAIN, device_class=SensorDeviceClass.TEMPERATURE
@@ -63,7 +64,7 @@ OPTIONS_SCHEMA = {
     ),
 }
 
-CONFIG_SCHEMA = {
+CONFIG_SCHEMA: VolDictType = {
     vol.Required(CONF_PRESET): selector.EntitySelector(
         selector.EntitySelectorConfig(domain=[SELECT_DOMAIN, INPUT_SELECT_DOMAIN])
     ),
@@ -89,6 +90,7 @@ class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     config_flow = CONFIG_FLOW
     options_flow = OPTIONS_FLOW
 
+    @override
     def async_config_entry_title(self, options: Mapping[str, Any]) -> str:
         """Return config entry title and hide the wrapped entity if registered."""
         # Hide the wrapped entry if registered
