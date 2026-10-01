@@ -232,3 +232,12 @@ async def test_default_name_without_device(hass: HomeAssistant):
 
     assert hass.states.get(climate_entity_id(hass, entry)
                            ).attributes["friendly_name"] == "Thermostat"
+
+
+async def test_temperature_unit_from_sensor(hass: HomeAssistant, select_entity):
+    hass.states.async_set(TEMPERATURE, "68", {"unit_of_measurement": "°F"})
+    entry = helper_entry(temperature=TEMPERATURE)
+    await setup_helper(hass, entry)
+
+    assert hass.states.get(climate_entity_id(hass, entry)
+                           ).attributes["current_temperature"] == 20

@@ -14,7 +14,7 @@ from homeassistant.components.climate import (PRESET_AWAY, PRESET_COMFORT,
                                               HVACMode)
 from homeassistant.components.select import ATTR_OPTIONS, SERVICE_SELECT_OPTION
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (ATTR_ENTITY_ID, CONF_NAME, CONF_UNIQUE_ID,
+from homeassistant.const import (ATTR_ENTITY_ID, ATTR_UNIT_OF_MEASUREMENT, CONF_NAME, CONF_UNIQUE_ID,
                                  EVENT_HOMEASSISTANT_START, STATE_UNAVAILABLE,
                                  STATE_UNKNOWN, UnitOfTemperature)
 from homeassistant.core import (CoreState, Event, EventStateChangedData,
@@ -139,6 +139,7 @@ class PilotWireClimate(ClimateEntity):
     """Representation of a Pilot Wire device."""
 
     _attr_should_poll = False
+    _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_translation_key: str = "pilot_wire"
 
     def __init__(
@@ -273,11 +274,6 @@ class PilotWireClimate(ClimateEntity):
         return 0 if self._power_threshold is None else self._power_threshold
 
     @property
-    def temperature_unit(self) -> str:
-        """Return the unit of measurement."""
-        return UnitOfTemperature.CELSIUS
-
-    @property
     def current_temperature(self) -> float | None:
         """Return the sensor temperature."""
         return self._cur_temperature
@@ -366,6 +362,9 @@ class PilotWireClimate(ClimateEntity):
             if not math.isfinite(cur_temp):
                 raise ValueError(f"Sensor has illegal state {state.state}")
             self._cur_temperature = cur_temp
+            unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
+            if unit in (UnitOfTemperature.CELSIUS, UnitOfTemperature.FAHRENHEIT):
+                self._attr_temperature_unit = unit
         except ValueError as ex:
             _LOGGER.error("Unable to update from temperature sensor: %s", ex)
 
