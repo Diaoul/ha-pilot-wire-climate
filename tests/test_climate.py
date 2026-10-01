@@ -33,6 +33,24 @@ async def test_select_without_comfort_minus_options(
     state = hass.states.get(climate_entity_id(hass, entry))
     assert state.state == "heat"
     assert state.attributes["preset_mode"] == "comfort"
+    assert state.attributes["preset_modes"] == ["comfort", "eco", "away"]
+
+
+async def test_presets_follow_select_options(hass: HomeAssistant, select_entity):
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+    entity_id = climate_entity_id(hass, entry)
+    assert hass.states.get(entity_id).attributes["preset_modes"] == [
+        "comfort",
+        "comfort_1",
+        "comfort_2",
+        "eco",
+        "away",
+    ]
+
+    hass.states.async_set(SELECT, "eco", {"options": ["off", "eco", "comfort"]})
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).attributes["preset_modes"] == ["comfort", "eco"]
 
 
 async def test_preset_follows_select(hass: HomeAssistant, select_entity):

@@ -186,11 +186,13 @@ class PilotWireClimate(ClimateEntity):
         else:
             self.hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, _async_startup)
 
+    def _options(self) -> list[str]:
+        state = self.hass.states.get(self.preset_entity_id)
+        return state.attributes.get(ATTR_OPTIONS, []) if state else []
+
     def _get_option(self, value: str) -> str:
         """Return the select option standing for a pilot wire value."""
-        state = self.hass.states.get(self.preset_entity_id)
-        options: list[str] = state.attributes.get(ATTR_OPTIONS, []) if state else []
-        for option in options:
+        for option in self._options():
             if get_value_key(option) == value:
                 return option
         raise HomeAssistantError(f"{self.preset_entity_id} has no option for {value}")
@@ -242,16 +244,12 @@ class PilotWireClimate(ClimateEntity):
     @override
     @property
     def preset_modes(self) -> list[str]:
-        """List of available preset modes."""
+        """List the presets that the select has an option for."""
+        presets = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY]
         if self.additional_modes:
-            return [
-                PRESET_COMFORT,
-                PRESET_COMFORT_1,
-                PRESET_COMFORT_2,
-                PRESET_ECO,
-                PRESET_AWAY,
-            ]
-        return [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY]
+            presets[1:1] = [PRESET_COMFORT_1, PRESET_COMFORT_2]
+        values = {get_value_key(option) for option in self._options()}
+        return [preset for preset in presets if PRESET_TO_VALUE[preset] in values]
 
     @override
     @property
