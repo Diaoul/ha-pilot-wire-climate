@@ -1,3 +1,5 @@
+"""Helpers for the pilot wire climate integration."""
+
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device import async_entity_id_to_device
 from homeassistant.helpers.schema_config_entry_flow import (
@@ -7,12 +9,8 @@ from homeassistant.helpers.schema_config_entry_flow import (
 from .const import VALUES_MAPPING
 
 
-def get_value_key(input_value: str) -> str:
-    """
-    Returns the key corresponding to the given input_value
-    in the VALUES_MAPPING dictionary by directly comparing
-    the value without normalization.
-    """
+def get_value_key(input_value: str) -> str | None:
+    """Return the pilot wire value a select option stands for."""
     for key, alternatives in VALUES_MAPPING.items():
         if input_value in alternatives:
             return key

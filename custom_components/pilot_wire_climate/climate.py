@@ -3,10 +3,8 @@
 import logging
 import math
 
-import homeassistant.helpers.config_validation as cv
-import voluptuous as vol
-from homeassistant.components.climate import PLATFORM_SCHEMA as CLIMATE_PLATFORM_SCHEMA
 from homeassistant.components.climate import (
+    PLATFORM_SCHEMA as CLIMATE_PLATFORM_SCHEMA,
     PRESET_AWAY,
     PRESET_COMFORT,
     PRESET_ECO,
@@ -39,26 +37,27 @@ from homeassistant.core import (
 )
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.device import async_entity_id_to_device
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.reload import async_setup_reload_service
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+import voluptuous as vol
 
 from . import PLATFORMS
-from .util import get_value_key
 from .const import (
-    DOMAIN,
     CONF_ADDITIONAL_MODES,
+    CONF_DEFAULT_PRESET,
     CONF_POWER,
     CONF_POWER_THRESHOLD,
     CONF_PRESET,
     CONF_TEMP,
+    DEFAULT_DEFAULT_PRESET,
     DEFAULT_NAME,
+    DOMAIN,
     PRESET_COMFORT_1,
     PRESET_COMFORT_2,
-    CONF_DEFAULT_PRESET,
-    DEFAULT_DEFAULT_PRESET,
     VALUE_COMFORT,
     VALUE_COMFORT_1,
     VALUE_COMFORT_2,
@@ -66,6 +65,7 @@ from .const import (
     VALUE_FROST,
     VALUE_OFF,
 )
+from .util import get_value_key
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -158,6 +158,14 @@ async def _async_setup_config(
     )
 
 
+def _finite_float(value: str) -> float | None:
+    try:
+        number = float(value)
+    except ValueError:
+        return None
+    return number if math.isfinite(number) else None
+
+
 def _is_missing(state: State | None) -> bool:
     return state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN)
 
@@ -208,9 +216,7 @@ class PilotWireClimate(ClimateEntity):
         self._default_preset = default_preset
 
         self._attr_has_entity_name = has_entity_name
-        self._attr_unique_id = (
-            unique_id if unique_id else "pilot_wire_" + preset_entity_id
-        )
+        self._attr_unique_id = unique_id or "pilot_wire_" + preset_entity_id
 
     async def async_added_to_hass(self) -> None:
         """Run when entity about to be added."""
@@ -384,29 +390,23 @@ class PilotWireClimate(ClimateEntity):
         if _is_missing(state):
             self._cur_temperature = None
             return
-        try:
-            cur_temp = float(state.state)
-            if not math.isfinite(cur_temp):
-                raise ValueError(f"Sensor has illegal state {state.state}")
-            self._cur_temperature = cur_temp
-            unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
-            if unit in (UnitOfTemperature.CELSIUS, UnitOfTemperature.FAHRENHEIT):
-                self._attr_temperature_unit = unit
-        except ValueError as ex:
-            _LOGGER.error("Unable to update from temperature sensor: %s", ex)
+        if (value := _finite_float(state.state)) is None:
+            _LOGGER.error("Unable to update from temperature sensor: %s", state.state)
+            return
+        self._cur_temperature = value
+        unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
+        if unit in (UnitOfTemperature.CELSIUS, UnitOfTemperature.FAHRENHEIT):
+            self._attr_temperature_unit = unit
 
     @callback
     def _async_update_power(self, state: State | None):
         if _is_missing(state):
             self._cur_power = None
             return
-        try:
-            cur_power = float(state.state)
-            if not math.isfinite(cur_power):
-                raise ValueError(f"Sensor has illegal state {state.state}")
-            self._cur_power = cur_power
-        except ValueError as ex:
-            _LOGGER.error("Unable to update from power sensor: %s", ex)
+        if (value := _finite_float(state.state)) is None:
+            _LOGGER.error("Unable to update from power sensor: %s", state.state)
+            return
+        self._cur_power = value
 
     async def _async_set_mode_value(self, value):
         data = {

@@ -1,31 +1,27 @@
 """Config flow for Pilot Wire thermostat."""
 
-from __future__ import annotations
-
 from collections.abc import Mapping
 from typing import Any
 
-import voluptuous as vol
-from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.components.input_select import DOMAIN as INPUT_SELECT_DOMAIN
-
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
-from homeassistant.components.sensor import SensorDeviceClass
-from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers import selector
+from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
+from homeassistant.helpers import entity_registry as er, selector
 from homeassistant.helpers.schema_config_entry_flow import (
     SchemaConfigFlowHandler,
     SchemaFlowFormStep,
 )
+import voluptuous as vol
+
 from .const import (
-    DOMAIN,
     CONF_ADDITIONAL_MODES,
+    CONF_DEFAULT_PRESET,
     CONF_POWER,
+    CONF_POWER_THRESHOLD,
     CONF_PRESET,
     CONF_TEMP,
-    CONF_POWER_THRESHOLD,
-    CONF_DEFAULT_PRESET,
     DEFAULT_DEFAULT_PRESET,
+    DOMAIN,
     VALUE_COMFORT,
     VALUE_COMFORT_1,
     VALUE_COMFORT_2,

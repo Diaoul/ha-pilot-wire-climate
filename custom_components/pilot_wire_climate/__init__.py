@@ -15,16 +15,17 @@ from homeassistant.helpers.helper_integration import (
 from homeassistant.helpers.schema_config_entry_flow import (
     wrapped_entity_config_entry_title,
 )
-from .util import config_entry_title
+
 from .const import (
     CONF_DEFAULT_PRESET,
     CONF_POWER,
     CONF_PRESET,
     CONF_TEMP,
     DEFAULT_DEFAULT_PRESET,
-    VALUES_MAPPING,
     OLD_PRESET_VALUE_MAPPING,
+    VALUES_MAPPING,
 )
+from .util import config_entry_title
 
 PLATFORMS = [Platform.CLIMATE]
 _LOGGER = logging.getLogger(__name__)

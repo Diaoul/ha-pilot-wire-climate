@@ -1,15 +1,15 @@
-import pytest
 from homeassistant.const import EVENT_HOMEASSISTANT_START
 from homeassistant.core import CoreState, HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+import pytest
 from pytest_homeassistant_custom_component.common import async_mock_service
 
 from .conftest import (
     FOUR_OPTIONS,
     POWER,
-    TEMPERATURE,
     SELECT,
     SIX_OPTIONS,
+    TEMPERATURE,
     climate_entity_id,
     helper_entry,
     setup_helper,
