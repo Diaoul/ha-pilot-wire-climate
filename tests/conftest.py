@@ -53,14 +53,14 @@ def select_entity(hass: HomeAssistant, source_entry, source_device) -> str:
     return SELECT
 
 
-def helper_entry(minor_version: int = 5, **options) -> MockConfigEntry:
+def helper_entry(minor_version: int = 6, **options) -> MockConfigEntry:
     return MockConfigEntry(
         domain=DOMAIN,
         version=1,
         minor_version=minor_version,
         title="Pilot wire mode",
         options={
-            "presets": SELECT,
+            "select": SELECT,
             "additional_modes": True,
             "power_threshold": 0,
             "default_preset": "eco",

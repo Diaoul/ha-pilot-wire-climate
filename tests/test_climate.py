@@ -172,7 +172,7 @@ async def test_input_select_source(hass: HomeAssistant):
     hass.states.async_set(
         "input_select.heater_mode", "comfort", {"options": SIX_OPTIONS}
     )
-    entry = helper_entry(presets="input_select.heater_mode")
+    entry = helper_entry(select="input_select.heater_mode")
     await setup_helper(hass, entry)
     calls = async_mock_service(hass, "input_select", "select_option")
 
@@ -254,7 +254,9 @@ async def setup_with_sensors(
 ):
     hass.states.async_set(TEMPERATURE, temperature)
     hass.states.async_set(POWER, power)
-    entry = helper_entry(temperature=TEMPERATURE, power=POWER, power_threshold=5)
+    entry = helper_entry(
+        temperature_sensor=TEMPERATURE, power_sensor=POWER, power_threshold=5
+    )
     await setup_helper(hass, entry)
     return climate_entity_id(hass, entry)
 
@@ -352,7 +354,7 @@ async def test_named_after_entry_without_device(hass: HomeAssistant):
     hass.states.async_set(
         "input_select.heater_mode", "comfort", {"options": SIX_OPTIONS}
     )
-    entry = helper_entry(presets="input_select.heater_mode")
+    entry = helper_entry(select="input_select.heater_mode")
     await setup_helper(hass, entry)
 
     assert (
@@ -363,7 +365,7 @@ async def test_named_after_entry_without_device(hass: HomeAssistant):
 
 async def test_temperature_unit_from_sensor(hass: HomeAssistant, select_entity):
     hass.states.async_set(TEMPERATURE, "68", {"unit_of_measurement": "°F"})
-    entry = helper_entry(temperature=TEMPERATURE)
+    entry = helper_entry(temperature_sensor=TEMPERATURE)
     await setup_helper(hass, entry)
 
     assert (

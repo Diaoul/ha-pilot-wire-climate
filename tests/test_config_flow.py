@@ -22,7 +22,7 @@ async def test_select_hidden_while_helper_exists(hass: HomeAssistant, select_ent
         DOMAIN, context={"source": "user"}
     )
     result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"presets": SELECT}
+        result["flow_id"], {"select": SELECT}
     )
     await hass.async_block_till_done()
     assert result["type"] is FlowResultType.CREATE_ENTRY
@@ -40,7 +40,7 @@ async def test_user_hidden_select_stays_hidden(hass: HomeAssistant, select_entit
         DOMAIN, context={"source": "user"}
     )
     result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"presets": SELECT}
+        result["flow_id"], {"select": SELECT}
     )
     await hass.async_block_till_done()
 
@@ -54,7 +54,7 @@ async def test_title_from_device(hass: HomeAssistant, select_entity):
         DOMAIN, context={"source": "user"}
     )
     result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"presets": SELECT}
+        result["flow_id"], {"select": SELECT}
     )
 
     assert result["title"] == "Heater"
@@ -70,7 +70,7 @@ async def test_title_without_device(hass: HomeAssistant):
         DOMAIN, context={"source": "user"}
     )
     result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"presets": "input_select.heater_mode"}
+        result["flow_id"], {"select": "input_select.heater_mode"}
     )
 
     assert result["title"] == "Heater mode"
@@ -108,14 +108,14 @@ async def test_change_select(hass: HomeAssistant, select_entity, source_entry):
         DOMAIN, context={"source": "user"}
     )
     result = await hass.config_entries.flow.async_configure(
-        result["flow_id"], {"presets": SELECT}
+        result["flow_id"], {"select": SELECT}
     )
     await hass.async_block_till_done()
     entry = result["result"]
 
-    await change_options(hass, entry.entry_id, presets=OTHER)
+    await change_options(hass, entry.entry_id, select=OTHER)
 
-    assert entry.options["presets"] == OTHER
+    assert entry.options["select"] == OTHER
     assert entry.title == "Other heater"
     assert registry.async_get(SELECT).hidden_by is None
     assert registry.async_get(OTHER).hidden_by is er.RegistryEntryHider.INTEGRATION
@@ -126,7 +126,7 @@ async def test_change_select(hass: HomeAssistant, select_entity, source_entry):
 
 async def test_change_option_reloads(hass: HomeAssistant, select_entity):
     hass.states.async_set(POWER, "100")
-    entry = helper_entry(power=POWER, power_threshold=5)
+    entry = helper_entry(power_sensor=POWER, power_threshold=5)
     await setup_helper(hass, entry)
     entity_id = climate_entity_id(hass, entry)
     assert hass.states.get(entity_id).attributes["hvac_action"] == "heating"

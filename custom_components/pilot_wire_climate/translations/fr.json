@@ -6,17 +6,17 @@
         "title": "Ajouter un thermostat Fil Pilote",
         "description": "Crée une entité climate qui contrôle un module fil pilote. \n\n Une fois configuré, l'entité climate apparaîtra dans l'onglet Entrées. Elle sera également automatiquement liée à l'appareil de l'entité select choisie lors de la configuration.",
         "data": {
-          "presets": "Entité de sélection",
-          "temperature": "Capteur de température",
-          "power": "Capteur de puissance",
+          "select": "Entité de sélection",
+          "temperature_sensor": "Capteur de température",
+          "power_sensor": "Capteur de puissance",
           "additional_modes": "Modes supplémentaires",
           "power_threshold": "Seuil de puissance",
           "default_preset": "Mode par défaut"
         },
         "data_description": {
-          "presets": "Entité de sélection utilisée pour contrôler les modes.",
-          "temperature": "Capteur de température reflétant la température actuelle.",
-          "power": "Capteur de puissance utilisé pour surveiller l'activité du chauffage.",
+          "select": "Entité de sélection utilisée pour contrôler les modes.",
+          "temperature_sensor": "Capteur de température reflétant la température actuelle.",
+          "power_sensor": "Capteur de puissance utilisé pour surveiller l'activité du chauffage.",
           "additional_modes": "Active les modes supplémentaires (Confort -1 \u00b0C et Confort -2 \u00b0C).",
           "power_threshold": "Seuil de puissance à partir duquel le radiateur est considéré en chauffe.",
           "default_preset": "Mode utilisé pour allumer un thermostat qui n'a pas de mode précédent auquel revenir."
@@ -28,17 +28,17 @@
     "step": {
       "init": {
         "data": {
-          "presets": "Entité de sélection",
-          "temperature": "Capteur de température",
-          "power": "Capteur de puissance",
+          "select": "Entité de sélection",
+          "temperature_sensor": "Capteur de température",
+          "power_sensor": "Capteur de puissance",
           "additional_modes": "Modes supplémentaires",
           "power_threshold": "Seuil de puissance",
           "default_preset": "Mode par défaut"
         },
         "data_description": {
-          "presets": "Entité de sélection utilisée pour contrôler les modes.",
-          "temperature": "Capteur de température reflétant la température actuelle.",
-          "power": "Capteur de puissance utilisé pour surveiller l'activité du chauffage.",
+          "select": "Entité de sélection utilisée pour contrôler les modes.",
+          "temperature_sensor": "Capteur de température reflétant la température actuelle.",
+          "power_sensor": "Capteur de puissance utilisé pour surveiller l'activité du chauffage.",
           "additional_modes": "Active les modes supplémentaires (Confort -1 \u00b0C et Confort -2 \u00b0C).",
           "power_threshold": "Seuil de puissance à partir duquel le radiateur est considéré en chauffe.",
           "default_preset": "Mode utilisé pour allumer un thermostat qui n'a pas de mode précédent auquel revenir."

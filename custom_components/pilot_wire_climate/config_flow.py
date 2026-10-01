@@ -17,10 +17,10 @@ import voluptuous as vol
 from .const import (
     CONF_ADDITIONAL_MODES,
     CONF_DEFAULT_PRESET,
-    CONF_POWER,
+    CONF_POWER_SENSOR,
     CONF_POWER_THRESHOLD,
-    CONF_PRESET,
-    CONF_TEMP,
+    CONF_SELECT,
+    CONF_TEMPERATURE_SENSOR,
     DEFAULT_DEFAULT_PRESET,
     DOMAIN,
     PRESET_TO_VALUE,
@@ -28,15 +28,15 @@ from .const import (
 from .util import async_hide_select, config_entry_title
 
 OPTIONS_SCHEMA: VolDictType = {
-    vol.Required(CONF_PRESET): selector.EntitySelector(
+    vol.Required(CONF_SELECT): selector.EntitySelector(
         selector.EntitySelectorConfig(domain=[SELECT_DOMAIN, INPUT_SELECT_DOMAIN])
     ),
-    vol.Optional(CONF_TEMP): selector.EntitySelector(
+    vol.Optional(CONF_TEMPERATURE_SENSOR): selector.EntitySelector(
         selector.EntitySelectorConfig(
             domain=SENSOR_DOMAIN, device_class=SensorDeviceClass.TEMPERATURE
         )
     ),
-    vol.Optional(CONF_POWER): selector.EntitySelector(
+    vol.Optional(CONF_POWER_SENSOR): selector.EntitySelector(
         selector.EntitySelectorConfig(
             domain=SENSOR_DOMAIN, device_class=SensorDeviceClass.POWER
         )
@@ -71,7 +71,7 @@ class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     """Handle a config or options flow."""
 
     VERSION = 1
-    MINOR_VERSION = 5
+    MINOR_VERSION = 6
 
     config_flow = CONFIG_FLOW
     options_flow = OPTIONS_FLOW
@@ -80,5 +80,5 @@ class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     @override
     def async_config_entry_title(self, options: Mapping[str, Any]) -> str:
         """Return config entry title and hide the select."""
-        async_hide_select(self.hass, options[CONF_PRESET])
-        return config_entry_title(self.hass, options[CONF_PRESET])
+        async_hide_select(self.hass, options[CONF_SELECT])
+        return config_entry_title(self.hass, options[CONF_SELECT])

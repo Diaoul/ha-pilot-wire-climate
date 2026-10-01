@@ -3,9 +3,14 @@
 from homeassistant.components.climate import PRESET_AWAY, PRESET_COMFORT, PRESET_ECO
 
 DOMAIN = "pilot_wire_climate"
-CONF_PRESET = "presets"
-CONF_TEMP = "temperature"
-CONF_POWER = "power"
+CONF_SELECT = "select"
+CONF_TEMPERATURE_SENSOR = "temperature_sensor"
+CONF_POWER_SENSOR = "power_sensor"
+OLD_OPTION_KEYS = {
+    "presets": CONF_SELECT,
+    "temperature": CONF_TEMPERATURE_SENSOR,
+    "power": CONF_POWER_SENSOR,
+}
 CONF_ADDITIONAL_MODES = "additional_modes"
 CONF_POWER_THRESHOLD = "power_threshold"
 PRESET_COMFORT_1 = "comfort_1"

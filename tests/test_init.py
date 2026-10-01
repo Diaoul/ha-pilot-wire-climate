@@ -37,7 +37,7 @@ async def test_migration_removes_duplicate_device(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    assert entry.minor_version == 5
+    assert entry.minor_version == 6
     assert device_registry.async_get(duplicate.id) is None
     [entity] = er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
     assert entity.device_id == source_device.id
@@ -53,7 +53,7 @@ async def test_migration_maps_old_default_preset(hass: HomeAssistant, select_ent
     await setup_helper(hass, entry)
 
     assert entry.options["default_preset"] == "away"
-    assert entry.minor_version == 5
+    assert entry.minor_version == 6
 
 
 @pytest.mark.parametrize(
@@ -79,7 +79,7 @@ async def test_follows_select_rename(hass: HomeAssistant, select_entity):
     )
     await hass.async_block_till_done()
 
-    assert entry.options["presets"] == "select.renamed"
+    assert entry.options["select"] == "select.renamed"
     assert er.async_get(hass).async_get("select.renamed").hidden_by is None
     [entity] = er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
     assert hass.states.get(entity.entity_id).attributes["preset_mode"] == "eco"
@@ -96,7 +96,8 @@ async def test_follows_sensor_rename(hass: HomeAssistant, select_entity, source_
             suggested_object_id=f"heater_{sensor}",
         )
     entry = helper_entry(
-        temperature="sensor.heater_temperature", power="sensor.heater_power"
+        temperature_sensor="sensor.heater_temperature",
+        power_sensor="sensor.heater_power",
     )
     await setup_helper(hass, entry)
 
@@ -109,8 +110,8 @@ async def test_follows_sensor_rename(hass: HomeAssistant, select_entity, source_
     )
     await hass.async_block_till_done()
 
-    assert entry.options["temperature"] == "sensor.new_temperature"
-    assert entry.options["power"] == "sensor.new_power"
+    assert entry.options["temperature_sensor"] == "sensor.new_temperature"
+    assert entry.options["power_sensor"] == "sensor.new_power"
 
 
 async def test_migration_titles_entry_after_device(hass: HomeAssistant, select_entity):
@@ -128,3 +129,30 @@ async def test_migration_keeps_custom_title(hass: HomeAssistant, select_entity):
     await hass.async_block_till_done()
 
     assert entry.title == "Bathroom"
+
+
+async def test_migration_renames_option_keys(hass: HomeAssistant, select_entity):
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=1,
+        minor_version=5,
+        options={
+            "presets": SELECT,
+            "temperature": "sensor.heater_temperature",
+            "power": "sensor.heater_power",
+            "additional_modes": True,
+            "power_threshold": 0,
+            "default_preset": "eco",
+        },
+    )
+    await setup_helper(hass, entry)
+
+    assert entry.minor_version == 6
+    assert entry.options == {
+        "select": SELECT,
+        "temperature_sensor": "sensor.heater_temperature",
+        "power_sensor": "sensor.heater_power",
+        "additional_modes": True,
+        "power_threshold": 0,
+        "default_preset": "eco",
+    }
