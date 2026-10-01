@@ -9,6 +9,9 @@ from homeassistant.helpers.device import async_entity_id_to_device_id
 from homeassistant.helpers.event import async_track_entity_registry_updated_event
 from homeassistant.helpers.helper_integration import (
     async_handle_source_entity_changes, async_remove_helper_devices)
+from homeassistant.helpers.schema_config_entry_flow import \
+    wrapped_entity_config_entry_title
+from .util import config_entry_title
 from .const import CONF_DEFAULT_PRESET, CONF_POWER, CONF_PRESET, CONF_TEMP, DEFAULT_DEFAULT_PRESET, VALUES_MAPPING, OLD_PRESET_VALUE_MAPPING
 
 PLATFORMS = [Platform.CLIMATE]
@@ -98,6 +101,11 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             remove_all_devices=True,
         )
 
+    title = config_entry.title
+    if config_entry.minor_version < 4 and title == wrapped_entity_config_entry_title(
+            hass, options[CONF_PRESET]):
+        title = config_entry_title(hass, options[CONF_PRESET])
+
     hass.config_entries.async_update_entry(
-        config_entry, options=options, minor_version=3)
+        config_entry, title=title, options=options, minor_version=4)
     return True

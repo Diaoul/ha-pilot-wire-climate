@@ -34,7 +34,7 @@ async def test_migration_removes_duplicate_device(hass: HomeAssistant, select_en
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    assert entry.minor_version == 3
+    assert entry.minor_version == 4
     assert device_registry.async_get(duplicate.id) is None
     [entity] = er.async_entries_for_config_entry(
         er.async_get(hass), entry.entry_id)
@@ -47,7 +47,7 @@ async def test_migration_maps_old_default_preset(hass: HomeAssistant, select_ent
     await setup_helper(hass, entry)
 
     assert entry.options["default_preset"] == "frost_protection"
-    assert entry.minor_version == 3
+    assert entry.minor_version == 4
 
 
 async def test_follows_select_rename(hass: HomeAssistant, select_entity):
@@ -85,3 +85,20 @@ async def test_follows_sensor_rename(hass: HomeAssistant, select_entity, source_
 
     assert entry.options["temperature"] == "sensor.new_temperature"
     assert entry.options["power"] == "sensor.new_power"
+
+
+async def test_migration_titles_entry_after_device(hass: HomeAssistant, select_entity):
+    entry = helper_entry(minor_version=3)
+    await setup_helper(hass, entry)
+
+    assert entry.title == "Heater"
+
+
+async def test_migration_keeps_custom_title(hass: HomeAssistant, select_entity):
+    entry = helper_entry(minor_version=3)
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, title="Bathroom")
+    assert await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert entry.title == "Bathroom"

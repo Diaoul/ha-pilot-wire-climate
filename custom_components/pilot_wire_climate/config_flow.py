@@ -14,8 +14,7 @@ from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import selector
 from homeassistant.helpers.schema_config_entry_flow import (
-    SchemaConfigFlowHandler, SchemaFlowFormStep,
-    wrapped_entity_config_entry_title)
+    SchemaConfigFlowHandler, SchemaFlowFormStep)
 from .const import (DOMAIN,
                     CONF_ADDITIONAL_MODES,
                     CONF_POWER,
@@ -29,6 +28,7 @@ from .const import (DOMAIN,
                     VALUE_COMFORT_2,
                     VALUE_ECO,
                     VALUE_FROST)
+from .util import config_entry_title
 
 OPTIONS_SCHEMA = {
     vol.Optional(CONF_TEMP): selector.EntitySelector(
@@ -83,7 +83,7 @@ OPTIONS_FLOW = {
 class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     """Handle a config or options flow."""
     VERSION = 1
-    MINOR_VERSION = 3
+    MINOR_VERSION = 4
 
     config_flow = CONFIG_FLOW
     options_flow = OPTIONS_FLOW
@@ -98,4 +98,4 @@ class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
                 options[CONF_PRESET], hidden_by=er.RegistryEntryHider.INTEGRATION
             )
 
-        return wrapped_entity_config_entry_title(self.hass, options[CONF_PRESET])
+        return config_entry_title(self.hass, options[CONF_PRESET])

@@ -46,17 +46,19 @@ def select_entity(hass: HomeAssistant, source_entry, source_device) -> str:
         config_entry=source_entry,
         device_id=source_device.id,
         suggested_object_id="heater_pilot_wire_mode",
+        has_entity_name=True,
+        original_name="Pilot wire mode",
     )
     hass.states.async_set(SELECT, "comfort", {"options": SIX_OPTIONS})
     return SELECT
 
 
-def helper_entry(minor_version: int = 3, **options) -> MockConfigEntry:
+def helper_entry(minor_version: int = 4, **options) -> MockConfigEntry:
     return MockConfigEntry(
         domain=DOMAIN,
         version=1,
         minor_version=minor_version,
-        title="Heater",
+        title="Pilot wire mode",
         options={
             "presets": SELECT,
             "additional_modes": True,
