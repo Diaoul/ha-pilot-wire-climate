@@ -55,7 +55,6 @@
   "entity": {
     "climate": {
       "pilot_wire": {
-        "name": "Thermostat",
         "state_attributes": {
           "preset_mode": {
             "state": {

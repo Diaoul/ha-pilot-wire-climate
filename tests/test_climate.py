@@ -214,3 +214,21 @@ async def test_reads_sources_once_home_assistant_started(hass: HomeAssistant, se
     assert state.attributes["preset_mode"] == "comfort"
     assert state.attributes["current_temperature"] == 20.5
     assert state.attributes["hvac_action"] == "heating"
+
+
+async def test_named_after_device(hass: HomeAssistant, select_entity):
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+
+    assert hass.states.get(climate_entity_id(hass, entry)
+                           ).attributes["friendly_name"] == "Heater"
+
+
+async def test_default_name_without_device(hass: HomeAssistant):
+    hass.states.async_set("input_select.heater_mode",
+                          "comfort", {"options": SIX_OPTIONS})
+    entry = helper_entry(presets="input_select.heater_mode")
+    await setup_helper(hass, entry)
+
+    assert hass.states.get(climate_entity_id(hass, entry)
+                           ).attributes["friendly_name"] == "Thermostat"

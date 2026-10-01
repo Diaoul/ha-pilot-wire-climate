@@ -165,6 +165,9 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
 
         if name:
             self._attr_name = name
+        elif has_entity_name and self.device_entry:
+            # The thermostat is the device's main feature.
+            self._attr_name = None
         else:
             self._attr_name = DEFAULT_NAME
 
