@@ -26,7 +26,6 @@ from homeassistant.helpers.device import async_entity_id_to_device
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.reload import async_setup_reload_service
-from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import PLATFORMS
@@ -136,12 +135,11 @@ def _is_missing(state: State | None) -> bool:
     return state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN)
 
 
-class PilotWireClimate(ClimateEntity, RestoreEntity):
+class PilotWireClimate(ClimateEntity):
     """Representation of a Pilot Wire device."""
 
     _attr_should_poll = False
     _attr_translation_key: str = "pilot_wire"
-    _enable_turn_on_off_backwards_compatibility = False
 
     def __init__(
         self,
