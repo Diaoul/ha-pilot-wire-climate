@@ -66,6 +66,7 @@ async def test_follows_select_rename(hass: HomeAssistant, select_entity):
     await hass.async_block_till_done()
 
     assert entry.options["presets"] == "select.renamed"
+    assert er.async_get(hass).async_get("select.renamed").hidden_by is None
     [entity] = er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
     assert hass.states.get(entity.entity_id).attributes["preset_mode"] == "eco"
 

@@ -25,20 +25,24 @@ from .const import (
     OLD_PRESET_VALUE_MAPPING,
     VALUES_MAPPING,
 )
-from .util import config_entry_title
+from .util import async_hide_select, async_unhide_select, config_entry_title
 
 PLATFORMS = [Platform.CLIMATE]
 _LOGGER = logging.getLogger(__name__)
 
+# runtime_data is the select the entry was set up with
+type PilotWireConfigEntry = ConfigEntry[str]
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+
+async def async_setup_entry(hass: HomeAssistant, entry: PilotWireConfigEntry) -> bool:
     """Set up from a config entry."""
+    entry.runtime_data = entry.options[CONF_PRESET]
 
     def set_option(key: str, entity_id: str) -> None:
-        # The update listener reloads the entry.
         hass.config_entries.async_update_entry(
             entry, options={**entry.options, key: entity_id}
         )
+        hass.config_entries.async_schedule_reload(entry.entry_id)
 
     entry.async_on_unload(
         async_handle_source_entity_changes(
@@ -74,26 +78,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
     return True
 
 
-async def config_entry_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Update listener, called when the config entry options are changed."""
-    await hass.config_entries.async_reload(entry.entry_id)
-
-
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_unload_entry(hass: HomeAssistant, entry: PilotWireConfigEntry) -> bool:
     """Unload a config entry."""
+    previous, current = entry.runtime_data, entry.options[CONF_PRESET]
+    # The options flow saves a new select and then reloads: this is the only
+    # point that sees both the old select and the new one.
+    if previous != current:
+        if async_unhide_select(hass, previous):
+            async_hide_select(hass, current)
+        if entry.title == config_entry_title(hass, previous):
+            hass.config_entries.async_update_entry(
+                entry, title=config_entry_title(hass, current)
+            )
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
 async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Unhide the select entity that the config flow hid."""
-    registry = er.async_get(hass)
-    entity_entry = registry.async_get(entry.options[CONF_PRESET])
-    if entity_entry and entity_entry.hidden_by == er.RegistryEntryHider.INTEGRATION:
-        registry.async_update_entity(entity_entry.entity_id, hidden_by=None)
+    async_unhide_select(hass, entry.options[CONF_PRESET])
 
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:

@@ -6,7 +6,7 @@ from typing import Any, override
 from homeassistant.components.input_select import DOMAIN as INPUT_SELECT_DOMAIN
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
-from homeassistant.helpers import entity_registry as er, selector
+from homeassistant.helpers import selector
 from homeassistant.helpers.schema_config_entry_flow import (
     SchemaConfigFlowHandler,
     SchemaFlowFormStep,
@@ -29,9 +29,12 @@ from .const import (
     VALUE_ECO,
     VALUE_FROST,
 )
-from .util import config_entry_title
+from .util import async_hide_select, config_entry_title
 
 OPTIONS_SCHEMA: VolDictType = {
+    vol.Required(CONF_PRESET): selector.EntitySelector(
+        selector.EntitySelectorConfig(domain=[SELECT_DOMAIN, INPUT_SELECT_DOMAIN])
+    ),
     vol.Optional(CONF_TEMP): selector.EntitySelector(
         selector.EntitySelectorConfig(
             domain=SENSOR_DOMAIN, device_class=SensorDeviceClass.TEMPERATURE
@@ -64,16 +67,8 @@ OPTIONS_SCHEMA: VolDictType = {
     ),
 }
 
-CONFIG_SCHEMA: VolDictType = {
-    vol.Required(CONF_PRESET): selector.EntitySelector(
-        selector.EntitySelectorConfig(domain=[SELECT_DOMAIN, INPUT_SELECT_DOMAIN])
-    ),
-    **OPTIONS_SCHEMA,
-}
-
-
 CONFIG_FLOW = {
-    "user": SchemaFlowFormStep(vol.Schema(CONFIG_SCHEMA)),
+    "user": SchemaFlowFormStep(vol.Schema(OPTIONS_SCHEMA)),
 }
 
 OPTIONS_FLOW = {
@@ -89,16 +84,10 @@ class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
 
     config_flow = CONFIG_FLOW
     options_flow = OPTIONS_FLOW
+    options_flow_reloads = True
 
     @override
     def async_config_entry_title(self, options: Mapping[str, Any]) -> str:
-        """Return config entry title and hide the wrapped entity if registered."""
-        # Hide the wrapped entry if registered
-        registry = er.async_get(self.hass)
-        entity_entry = registry.async_get(options[CONF_PRESET])
-        if entity_entry is not None and not entity_entry.hidden:
-            registry.async_update_entity(
-                options[CONF_PRESET], hidden_by=er.RegistryEntryHider.INTEGRATION
-            )
-
+        """Return config entry title and hide the select."""
+        async_hide_select(self.hass, options[CONF_PRESET])
         return config_entry_title(self.hass, options[CONF_PRESET])

@@ -1,6 +1,7 @@
 """Helpers for the pilot wire climate integration."""
 
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device import async_entity_id_to_device
 from homeassistant.helpers.schema_config_entry_flow import (
     wrapped_entity_config_entry_title,
@@ -27,3 +28,26 @@ def config_entry_title(hass: HomeAssistant, preset_entity_id: str) -> str:
     if device and (name := device.name_by_user or device.name):
         return name
     return wrapped_entity_config_entry_title(hass, preset_entity_id)
+
+
+def async_hide_select(hass: HomeAssistant, entity_id: str) -> None:
+    """Hide the select, which the thermostat replaces in the UI."""
+    registry = er.async_get(hass)
+    entity_entry = registry.async_get(entity_id)
+    if entity_entry is not None and not entity_entry.hidden:
+        registry.async_update_entity(
+            entity_id, hidden_by=er.RegistryEntryHider.INTEGRATION
+        )
+
+
+def async_unhide_select(hass: HomeAssistant, entity_id: str) -> bool:
+    """Unhide the select unless the user hid it, and say whether it was hidden."""
+    registry = er.async_get(hass)
+    entity_entry = registry.async_get(entity_id)
+    if (
+        entity_entry is not None
+        and entity_entry.hidden_by == er.RegistryEntryHider.INTEGRATION
+    ):
+        registry.async_update_entity(entity_id, hidden_by=None)
+        return True
+    return False
