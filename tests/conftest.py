@@ -11,6 +11,8 @@ from custom_components.pilot_wire_climate.const import DOMAIN
 pytest_plugins = "pytest_homeassistant_custom_component"
 
 SELECT = "select.heater_pilot_wire_mode"
+TEMPERATURE = "sensor.heater_temperature"
+POWER = "sensor.heater_power"
 SIX_OPTIONS = ["off", "frost_protection", "eco",
                "comfort", "comfort_-1", "comfort_-2"]
 FOUR_OPTIONS = ["off", "frost_protection", "eco", "comfort"]

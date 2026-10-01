@@ -132,6 +132,10 @@ async def _async_setup_config(
     )
 
 
+def _is_missing(state: State | None) -> bool:
+    return state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN)
+
+
 class PilotWireClimate(ClimateEntity, RestoreEntity):
     """Representation of a Pilot Wire device."""
 
@@ -209,31 +213,14 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         @callback
         def _async_startup(_: Event | None = None) -> None:
             """Init on startup."""
-            mode_state = self.hass.states.get(self.preset_entity_id)
-            if mode_state and mode_state.state not in (
-                STATE_UNAVAILABLE,
-                STATE_UNKNOWN,
-            ):
-                self._async_update_mode(mode_state)
-                self.async_write_ha_state()
-
+            self._async_update_mode(self.hass.states.get(self.preset_entity_id))
             if self.temp_entity_id is not None:
-                temp_state = self.hass.states.get(self.temp_entity_id)
-                if temp_state and temp_state.state not in (
-                    STATE_UNAVAILABLE,
-                    STATE_UNKNOWN,
-                ):
-                    self._async_update_temp(temp_state)
-                    self.async_write_ha_state()
-
+                self._async_update_temp(
+                    self.hass.states.get(self.temp_entity_id))
             if self.power_entity_id is not None:
-                power_state = self.hass.states.get(self.power_entity_id)
-                if power_state and power_state.state not in (
-                    STATE_UNAVAILABLE,
-                    STATE_UNKNOWN,
-                ):
-                    self._async_update_power(power_state)
-                    self.async_write_ha_state()
+                self._async_update_power(
+                    self.hass.states.get(self.power_entity_id))
+            self.async_write_ha_state()
 
         if self.hass.state is CoreState.running:
             _async_startup()
@@ -250,6 +237,12 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
                 return option
         raise HomeAssistantError(
             f"{self.preset_entity_id} has no option for {value}")
+
+    @property
+    def available(self) -> bool:
+        """Return whether the select driving the heater is available."""
+        state = self.hass.states.get(self.preset_entity_id)
+        return state is not None and state.state != STATE_UNAVAILABLE
 
     @property
     def supported_features(self) -> ClimateEntityFeature:
@@ -340,39 +333,33 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             return HVACMode.OFF if self.preset_mode == PRESET_NONE else HVACMode.HEAT
         return None
 
-    async def _async_temp_changed(self, event: Event[EventStateChangedData]) -> None:
+    @callback
+    def _async_temp_changed(self, event: Event[EventStateChangedData]) -> None:
         """Handle temperature changes."""
-        new_state = event.data["new_state"]
-        if new_state is None or new_state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
-            return
-
-        self._async_update_temp(new_state)
+        self._async_update_temp(event.data["new_state"])
         self.async_write_ha_state()
 
-    async def _async_power_changed(self, event: Event[EventStateChangedData]) -> None:
+    @callback
+    def _async_power_changed(self, event: Event[EventStateChangedData]) -> None:
         """Handle power changes."""
-        new_state = event.data["new_state"]
-        if new_state is None or new_state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
-            return
-        self._async_update_power(new_state)
+        self._async_update_power(event.data["new_state"])
         self.async_write_ha_state()
 
     @callback
     def _async_mode_changed(self, event: Event[EventStateChangedData]) -> None:
         """Handle preset switch state changes."""
-
-        new_state = event.data["new_state"]
-        if new_state is None or new_state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
-            return
-        self._async_update_mode(new_state)
+        self._async_update_mode(event.data["new_state"])
         self.async_write_ha_state()
 
     @callback
-    def _async_update_mode(self, state: State):
-        self._cur_mode = state.state
+    def _async_update_mode(self, state: State | None):
+        self._cur_mode = None if _is_missing(state) else state.state
 
     @callback
-    def _async_update_temp(self, state: State):
+    def _async_update_temp(self, state: State | None):
+        if _is_missing(state):
+            self._cur_temperature = None
+            return
         try:
             cur_temp = float(state.state)
             if not math.isfinite(cur_temp):
@@ -382,7 +369,10 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             _LOGGER.error("Unable to update from temperature sensor: %s", ex)
 
     @callback
-    def _async_update_power(self, state: State):
+    def _async_update_power(self, state: State | None):
+        if _is_missing(state):
+            self._cur_power = None
+            return
         try:
             cur_power = float(state.state)
             if not math.isfinite(cur_power):

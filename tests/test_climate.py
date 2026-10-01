@@ -3,7 +3,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from pytest_homeassistant_custom_component.common import async_mock_service
 
-from .conftest import (FOUR_OPTIONS, SELECT, SIX_OPTIONS, climate_entity_id,
+from .conftest import (FOUR_OPTIONS, POWER, TEMPERATURE, SELECT, SIX_OPTIONS, climate_entity_id,
                        helper_entry, setup_helper)
 
 
@@ -76,15 +76,36 @@ async def test_options_are_read_when_used(hass: HomeAssistant, select_entity):
     assert calls[-1].data["option"] == "comfort_-1"
 
 
-async def test_select_unavailable(hass: HomeAssistant, select_entity):
+async def test_select_missing(hass: HomeAssistant, select_entity):
     hass.states.async_remove(SELECT)
     entry = helper_entry()
     await setup_helper(hass, entry)
     entity_id = climate_entity_id(hass, entry)
+    calls = async_mock_service(hass, "select", "select_option")
 
-    assert hass.states.get(entity_id).attributes["preset_mode"] is None
-    with pytest.raises(HomeAssistantError):
-        await call(hass, "set_hvac_mode", entity_id, hvac_mode="heat")
+    assert hass.states.get(entity_id).state == "unavailable"
+    await call(hass, "set_hvac_mode", entity_id, hvac_mode="off")
+    assert calls == []
+
+
+async def test_follows_select_availability(hass: HomeAssistant, select_entity):
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+    entity_id = climate_entity_id(hass, entry)
+
+    hass.states.async_set(SELECT, "unavailable", {"options": SIX_OPTIONS})
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).state == "unavailable"
+
+    hass.states.async_set(SELECT, "unknown", {"options": SIX_OPTIONS})
+    await hass.async_block_till_done()
+    state = hass.states.get(entity_id)
+    assert state.state == "unknown"
+    assert state.attributes["preset_mode"] is None
+
+    hass.states.async_set(SELECT, "eco", {"options": SIX_OPTIONS})
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).state == "heat"
 
 
 async def test_input_select_source(hass: HomeAssistant):
@@ -115,3 +136,31 @@ async def test_set_hvac_mode_keeps_current_preset(hass: HomeAssistant, select_en
     assert calls == []
     await call(hass, "set_hvac_mode", entity_id, hvac_mode="heat")
     assert [c.data["option"] for c in calls] == ["eco"]
+
+
+async def setup_with_sensors(hass: HomeAssistant, power: str = "0", temperature: str = "20.5"):
+    hass.states.async_set(TEMPERATURE, temperature)
+    hass.states.async_set(POWER, power)
+    entry = helper_entry(temperature=TEMPERATURE,
+                         power=POWER, power_threshold=5)
+    await setup_helper(hass, entry)
+    return climate_entity_id(hass, entry)
+
+
+async def test_sensor_updates(hass: HomeAssistant, select_entity):
+    entity_id = await setup_with_sensors(hass)
+    assert hass.states.get(entity_id).attributes["current_temperature"] == 20.5
+
+    hass.states.async_set(TEMPERATURE, "21.5")
+    hass.states.async_set(POWER, "800")
+    await hass.async_block_till_done()
+    state = hass.states.get(entity_id)
+    assert state.attributes["current_temperature"] == 21.5
+    assert state.attributes["hvac_action"] == "heating"
+
+    hass.states.async_set(TEMPERATURE, "unavailable")
+    hass.states.async_set(POWER, "unknown")
+    await hass.async_block_till_done()
+    state = hass.states.get(entity_id)
+    assert state.attributes["current_temperature"] is None
+    assert "hvac_action" not in state.attributes
