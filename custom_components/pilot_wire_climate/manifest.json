@@ -2,16 +2,16 @@
   "domain": "pilot_wire_climate",
   "name": "Pilot wire climate",
   "codeowners": [
-    "@faizpuru"
+    "@Diaoul"
   ],
   "config_flow": true,
   "dependencies": [
     "sensor",
     "select"
   ],
-  "documentation": "https://github.com/faizpuru/ha-pilot-wire-climate",
+  "documentation": "https://github.com/Diaoul/ha-pilot-wire-climate",
   "integration_type": "helper",
   "iot_class": "calculated",
-  "issue_tracker": "https://github.com/faizpuru/ha-pilot-wire-climate/issues",
+  "issue_tracker": "https://github.com/Diaoul/ha-pilot-wire-climate/issues",
   "version": "1.0.3"
 }

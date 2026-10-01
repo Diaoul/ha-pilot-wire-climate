@@ -1,7 +1,7 @@
 # README - Pilot Wire Integration for Home Assistant
 
-[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/faizpuru/ha-pilot-wire-climate/blob/master/README.md)
-[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/faizpuru/ha-pilot-wire-climate/blob/master/README-fr.md)
+[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/Diaoul/ha-pilot-wire-climate/blob/master/README.md)
+[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/Diaoul/ha-pilot-wire-climate/blob/master/README-fr.md)
 
 ## Overview
 This Home Assistant integration simplifies the setup of pilot wire modules for heating systems, providing seamless conversion of multiple entities (`select` and `power`) into a unified `climate` entity. An optional temperature `sensor` entity can also be added. This integration is ideal for controlling pilot wire heating modules, enabling streamlined control and monitoring of heating states.
@@ -23,7 +23,7 @@ The integration is compatible with the following devices or any climate manageab
 ## Installation
 
 ### Option 1: Using HACS (Home Assistant Community Store)
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=faizpuru&repository=ha-pilot-wire-climate&category=integration)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Diaoul&repository=ha-pilot-wire-climate&category=integration)
 
 1. Use the button above or search for "Wire Pilot Climate" in HACS
 2. Download the integration and restart Home Assistant

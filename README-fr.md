@@ -1,7 +1,7 @@
 # README - Intégration Fil Pilote pour Home Assistant
 
-[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/faizpuru/ha-pilot-wire-climate/blob/master/README.md)
-[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/faizpuru/ha-pilot-wire-climate/blob/master/README-fr.md)
+[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/Diaoul/ha-pilot-wire-climate/blob/master/README.md)
+[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/Diaoul/ha-pilot-wire-climate/blob/master/README-fr.md)
 
 ## Vue d'ensemble
 Cette intégration pour Home Assistant simplifie l'installation de modules fil pilote pour les systèmes de chauffage, en convertissant automatiquement plusieurs entités (`select` et `power`) en une seule entité `climate`. Une entité `sensor` de température peut également être ajoutée en option. Cette intégration est idéale pour contrôler et surveiller les modules fil pilote de chauffage.
@@ -23,7 +23,7 @@ L'intégration est compatible avec les appareils suivants ou tout thermostat con
 ## Installation
 
 ### Option 1 : Utilisation de HACS (Home Assistant Community Store)
-[![Ouvre Home Assistant et charge le repository dans HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=faizpuru&repository=ha-pilot-wire-climate&category=integration)
+[![Ouvre Home Assistant et charge le repository dans HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Diaoul&repository=ha-pilot-wire-climate&category=integration)
 
 1. Utilisez le bouton au dessus ou bien cherchez "Wire Pilot Climate" dans HACS
 2. Installez l'intégration, puis redémarrez Home Assistant.
