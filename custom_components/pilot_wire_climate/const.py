@@ -1,5 +1,4 @@
-from homeassistant.components.climate import (PRESET_AWAY, PRESET_COMFORT,
-                                              PRESET_ECO)
+from homeassistant.components.climate import PRESET_AWAY, PRESET_COMFORT, PRESET_ECO
 
 DOMAIN = "pilot_wire_climate"
 DEFAULT_NAME = "Thermostat"
@@ -26,7 +25,7 @@ OLD_PRESET_VALUE_MAPPING = {
     PRESET_COMFORT_1: VALUE_COMFORT_1,
     PRESET_COMFORT_2: VALUE_COMFORT_2,
     PRESET_ECO: VALUE_ECO,
-    PRESET_AWAY: VALUE_FROST
+    PRESET_AWAY: VALUE_FROST,
 }
 
 VALUES_MAPPING = {

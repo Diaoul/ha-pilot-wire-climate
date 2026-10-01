@@ -1,4 +1,5 @@
-""" Pilot wire component."""
+"""Pilot wire component."""
+
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -8,11 +9,22 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device import async_entity_id_to_device_id
 from homeassistant.helpers.event import async_track_entity_registry_updated_event
 from homeassistant.helpers.helper_integration import (
-    async_handle_source_entity_changes, async_remove_helper_devices)
-from homeassistant.helpers.schema_config_entry_flow import \
-    wrapped_entity_config_entry_title
+    async_handle_source_entity_changes,
+    async_remove_helper_devices,
+)
+from homeassistant.helpers.schema_config_entry_flow import (
+    wrapped_entity_config_entry_title,
+)
 from .util import config_entry_title
-from .const import CONF_DEFAULT_PRESET, CONF_POWER, CONF_PRESET, CONF_TEMP, DEFAULT_DEFAULT_PRESET, VALUES_MAPPING, OLD_PRESET_VALUE_MAPPING
+from .const import (
+    CONF_DEFAULT_PRESET,
+    CONF_POWER,
+    CONF_PRESET,
+    CONF_TEMP,
+    DEFAULT_DEFAULT_PRESET,
+    VALUES_MAPPING,
+    OLD_PRESET_VALUE_MAPPING,
+)
 
 PLATFORMS = [Platform.CLIMATE]
 _LOGGER = logging.getLogger(__name__)
@@ -24,16 +36,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     def set_option(key: str, entity_id: str) -> None:
         # The update listener reloads the entry.
         hass.config_entries.async_update_entry(
-            entry, options={**entry.options, key: entity_id})
+            entry, options={**entry.options, key: entity_id}
+        )
 
     entry.async_on_unload(
         async_handle_source_entity_changes(
             hass,
             helper_config_entry_id=entry.entry_id,
             set_source_entity_id_or_uuid=lambda entity_id: set_option(
-                CONF_PRESET, entity_id),
+                CONF_PRESET, entity_id
+            ),
             source_device_id=async_entity_id_to_device_id(
-                hass, entry.options[CONF_PRESET]),
+                hass, entry.options[CONF_PRESET]
+            ),
             source_entity_id_or_uuid=entry.options[CONF_PRESET],
         )
     )
@@ -45,17 +60,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         async def async_sensor_updated(
             event: Event[er.EventEntityRegistryUpdatedData], key: str = key
         ) -> None:
-            if event.data["action"] == "update" and "entity_id" in event.data["changes"]:
+            if (
+                event.data["action"] == "update"
+                and "entity_id" in event.data["changes"]
+            ):
                 set_option(key, event.data["entity_id"])
 
         entry.async_on_unload(
             async_track_entity_registry_updated_event(
-                hass, sensor_entity_id, async_sensor_updated)
+                hass, sensor_entity_id, async_sensor_updated
+            )
         )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    entry.async_on_unload(entry.add_update_listener(
-        config_entry_update_listener))
+    entry.async_on_unload(entry.add_update_listener(config_entry_update_listener))
     return True
 
 
@@ -96,16 +114,17 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         async_remove_helper_devices(
             hass,
             helper_config_entry_id=config_entry.entry_id,
-            source_device_id=async_entity_id_to_device_id(
-                hass, options[CONF_PRESET]),
+            source_device_id=async_entity_id_to_device_id(hass, options[CONF_PRESET]),
             remove_all_devices=True,
         )
 
     title = config_entry.title
     if config_entry.minor_version < 4 and title == wrapped_entity_config_entry_title(
-            hass, options[CONF_PRESET]):
+        hass, options[CONF_PRESET]
+    ):
         title = config_entry_title(hass, options[CONF_PRESET])
 
     hass.config_entries.async_update_entry(
-        config_entry, title=title, options=options, minor_version=4)
+        config_entry, title=title, options=options, minor_version=4
+    )
     return True

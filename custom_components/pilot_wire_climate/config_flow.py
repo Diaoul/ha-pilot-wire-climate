@@ -14,58 +14,62 @@ from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers import selector
 from homeassistant.helpers.schema_config_entry_flow import (
-    SchemaConfigFlowHandler, SchemaFlowFormStep)
-from .const import (DOMAIN,
-                    CONF_ADDITIONAL_MODES,
-                    CONF_POWER,
-                    CONF_PRESET,
-                    CONF_TEMP,
-                    CONF_POWER_THRESHOLD,
-                    CONF_DEFAULT_PRESET,
-                    DEFAULT_DEFAULT_PRESET,
-                    VALUE_COMFORT,
-                    VALUE_COMFORT_1,
-                    VALUE_COMFORT_2,
-                    VALUE_ECO,
-                    VALUE_FROST)
+    SchemaConfigFlowHandler,
+    SchemaFlowFormStep,
+)
+from .const import (
+    DOMAIN,
+    CONF_ADDITIONAL_MODES,
+    CONF_POWER,
+    CONF_PRESET,
+    CONF_TEMP,
+    CONF_POWER_THRESHOLD,
+    CONF_DEFAULT_PRESET,
+    DEFAULT_DEFAULT_PRESET,
+    VALUE_COMFORT,
+    VALUE_COMFORT_1,
+    VALUE_COMFORT_2,
+    VALUE_ECO,
+    VALUE_FROST,
+)
 from .util import config_entry_title
 
 OPTIONS_SCHEMA = {
     vol.Optional(CONF_TEMP): selector.EntitySelector(
         selector.EntitySelectorConfig(
-            domain=SENSOR_DOMAIN,
-            device_class=SensorDeviceClass.TEMPERATURE
+            domain=SENSOR_DOMAIN, device_class=SensorDeviceClass.TEMPERATURE
         )
     ),
     vol.Optional(CONF_POWER): selector.EntitySelector(
         selector.EntitySelectorConfig(
-            domain=SENSOR_DOMAIN,
-            device_class=SensorDeviceClass.POWER
+            domain=SENSOR_DOMAIN, device_class=SensorDeviceClass.POWER
         )
     ),
     vol.Optional(CONF_ADDITIONAL_MODES, default=True): selector.BooleanSelector(),
     vol.Optional(CONF_POWER_THRESHOLD, default=0): selector.NumberSelector(
         selector.NumberSelectorConfig(
-            min=0,
-            step=1,
-            unit_of_measurement="W",
-            mode=selector.NumberSelectorMode.BOX
+            min=0, step=1, unit_of_measurement="W", mode=selector.NumberSelectorMode.BOX
         )
     ),
-    vol.Optional(CONF_DEFAULT_PRESET, default=DEFAULT_DEFAULT_PRESET): selector.SelectSelector(
+    vol.Optional(
+        CONF_DEFAULT_PRESET, default=DEFAULT_DEFAULT_PRESET
+    ): selector.SelectSelector(
         selector.SelectSelectorConfig(
-            options=[VALUE_COMFORT,  VALUE_COMFORT_1,
-                     VALUE_COMFORT_2, VALUE_ECO, VALUE_FROST],
+            options=[
+                VALUE_COMFORT,
+                VALUE_COMFORT_1,
+                VALUE_COMFORT_2,
+                VALUE_ECO,
+                VALUE_FROST,
+            ],
             mode=selector.SelectSelectorMode.DROPDOWN,
         )
     ),
-
 }
 
 CONFIG_SCHEMA = {
     vol.Required(CONF_PRESET): selector.EntitySelector(
-        selector.EntitySelectorConfig(
-            domain=[SELECT_DOMAIN, INPUT_SELECT_DOMAIN])
+        selector.EntitySelectorConfig(domain=[SELECT_DOMAIN, INPUT_SELECT_DOMAIN])
     ),
     **OPTIONS_SCHEMA,
 }
@@ -82,6 +86,7 @@ OPTIONS_FLOW = {
 
 class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     """Handle a config or options flow."""
+
     VERSION = 1
     MINOR_VERSION = 4
 

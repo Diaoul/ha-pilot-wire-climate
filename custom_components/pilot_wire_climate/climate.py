@@ -5,21 +5,38 @@ import math
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-from homeassistant.components.climate import \
-    PLATFORM_SCHEMA as CLIMATE_PLATFORM_SCHEMA
-from homeassistant.components.climate import (PRESET_AWAY, PRESET_COMFORT,
-                                              PRESET_ECO, PRESET_NONE,
-                                              ClimateEntity,
-                                              ClimateEntityFeature, HVACAction,
-                                              HVACMode)
+from homeassistant.components.climate import PLATFORM_SCHEMA as CLIMATE_PLATFORM_SCHEMA
+from homeassistant.components.climate import (
+    PRESET_AWAY,
+    PRESET_COMFORT,
+    PRESET_ECO,
+    PRESET_NONE,
+    ClimateEntity,
+    ClimateEntityFeature,
+    HVACAction,
+    HVACMode,
+)
 from homeassistant.components.select import ATTR_OPTIONS, SERVICE_SELECT_OPTION
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (ATTR_ENTITY_ID, ATTR_UNIT_OF_MEASUREMENT, CONF_NAME, CONF_UNIQUE_ID,
-                                 EVENT_HOMEASSISTANT_START, STATE_UNAVAILABLE,
-                                 STATE_UNKNOWN, UnitOfTemperature)
-from homeassistant.core import (CoreState, Event, EventStateChangedData,
-                                HomeAssistant, State, callback,
-                                split_entity_id)
+from homeassistant.const import (
+    ATTR_ENTITY_ID,
+    ATTR_UNIT_OF_MEASUREMENT,
+    CONF_NAME,
+    CONF_UNIQUE_ID,
+    EVENT_HOMEASSISTANT_START,
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
+    UnitOfTemperature,
+)
+from homeassistant.core import (
+    CoreState,
+    Event,
+    EventStateChangedData,
+    HomeAssistant,
+    State,
+    callback,
+    split_entity_id,
+)
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device import async_entity_id_to_device
@@ -30,17 +47,25 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from . import PLATFORMS
 from .util import get_value_key
-from .const import (DOMAIN,
-                    CONF_ADDITIONAL_MODES,
-                    CONF_POWER,
-                    CONF_POWER_THRESHOLD,
-                    CONF_PRESET,
-                    CONF_TEMP,
-                    DEFAULT_NAME,
-                    PRESET_COMFORT_1,
-                    PRESET_COMFORT_2,
-                    CONF_DEFAULT_PRESET,
-                    DEFAULT_DEFAULT_PRESET, VALUE_COMFORT, VALUE_COMFORT_1, VALUE_COMFORT_2, VALUE_ECO, VALUE_FROST, VALUE_OFF)
+from .const import (
+    DOMAIN,
+    CONF_ADDITIONAL_MODES,
+    CONF_POWER,
+    CONF_POWER_THRESHOLD,
+    CONF_PRESET,
+    CONF_TEMP,
+    DEFAULT_NAME,
+    PRESET_COMFORT_1,
+    PRESET_COMFORT_2,
+    CONF_DEFAULT_PRESET,
+    DEFAULT_DEFAULT_PRESET,
+    VALUE_COMFORT,
+    VALUE_COMFORT_1,
+    VALUE_COMFORT_2,
+    VALUE_ECO,
+    VALUE_FROST,
+    VALUE_OFF,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -64,7 +89,9 @@ PLATFORM_SCHEMA_COMMON = vol.Schema(
         vol.Optional(CONF_NAME): cv.string,
         vol.Optional(CONF_UNIQUE_ID): cv.string,
         vol.Optional(CONF_POWER_THRESHOLD): cv.positive_float,
-        vol.Optional(CONF_DEFAULT_PRESET, default=DEFAULT_DEFAULT_PRESET): vol.In([VALUE_COMFORT, VALUE_COMFORT_1, VALUE_COMFORT_2, VALUE_ECO, VALUE_FROST]),
+        vol.Optional(CONF_DEFAULT_PRESET, default=DEFAULT_DEFAULT_PRESET): vol.In(
+            [VALUE_COMFORT, VALUE_COMFORT_1, VALUE_COMFORT_2, VALUE_ECO, VALUE_FROST]
+        ),
     }
 )
 
@@ -193,16 +220,14 @@ class PilotWireClimate(ClimateEntity):
         if self.temp_entity_id is not None:
             self.async_on_remove(
                 async_track_state_change_event(
-                    self.hass, [
-                        self.temp_entity_id], self._async_temp_changed
+                    self.hass, [self.temp_entity_id], self._async_temp_changed
                 )
             )
 
         if self.power_entity_id is not None:
             self.async_on_remove(
                 async_track_state_change_event(
-                    self.hass, [
-                        self.power_entity_id], self._async_power_changed
+                    self.hass, [self.power_entity_id], self._async_power_changed
                 )
             )
 
@@ -217,18 +242,15 @@ class PilotWireClimate(ClimateEntity):
             """Init on startup."""
             self._async_update_mode(self.hass.states.get(self.preset_entity_id))
             if self.temp_entity_id is not None:
-                self._async_update_temp(
-                    self.hass.states.get(self.temp_entity_id))
+                self._async_update_temp(self.hass.states.get(self.temp_entity_id))
             if self.power_entity_id is not None:
-                self._async_update_power(
-                    self.hass.states.get(self.power_entity_id))
+                self._async_update_power(self.hass.states.get(self.power_entity_id))
             self.async_write_ha_state()
 
         if self.hass.state is CoreState.running:
             _async_startup()
         else:
-            self.hass.bus.async_listen_once(
-                EVENT_HOMEASSISTANT_START, _async_startup)
+            self.hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, _async_startup)
 
     def _get_option(self, value: str) -> str:
         """Return the select option standing for a pilot wire value."""
@@ -237,8 +259,7 @@ class PilotWireClimate(ClimateEntity):
         for option in options or ():
             if get_value_key(option) == value:
                 return option
-        raise HomeAssistantError(
-            f"{self.preset_entity_id} has no option for {value}")
+        raise HomeAssistantError(f"{self.preset_entity_id} has no option for {value}")
 
     @property
     def available(self) -> bool:
@@ -306,8 +327,8 @@ class PilotWireClimate(ClimateEntity):
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set preset mode."""
-        await self._async_set_mode_value(
-            self._get_option(PRESET_TO_VALUE[preset_mode]))
+        await self._async_set_mode_value(self._get_option(PRESET_TO_VALUE[preset_mode]))
+
     # Modes
 
     @property
@@ -354,7 +375,9 @@ class PilotWireClimate(ClimateEntity):
         if self._cur_mode is not None and get_value_key(self._cur_mode) is None:
             _LOGGER.warning(
                 "%s reports unknown pilot wire mode %s, shown as comfort",
-                self.preset_entity_id, self._cur_mode)
+                self.preset_entity_id,
+                self._cur_mode,
+            )
 
     @callback
     def _async_update_temp(self, state: State | None):
@@ -391,4 +414,5 @@ class PilotWireClimate(ClimateEntity):
             "option": value,
         }
         await self.hass.services.async_call(
-            split_entity_id(self.preset_entity_id)[0], SERVICE_SELECT_OPTION, data)
+            split_entity_id(self.preset_entity_id)[0], SERVICE_SELECT_OPTION, data
+        )

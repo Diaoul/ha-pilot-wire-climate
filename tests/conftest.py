@@ -13,8 +13,7 @@ pytest_plugins = "pytest_homeassistant_custom_component"
 SELECT = "select.heater_pilot_wire_mode"
 TEMPERATURE = "sensor.heater_temperature"
 POWER = "sensor.heater_power"
-SIX_OPTIONS = ["off", "frost_protection", "eco",
-               "comfort", "comfort_-1", "comfort_-2"]
+SIX_OPTIONS = ["off", "frost_protection", "eco", "comfort", "comfort_-1", "comfort_-2"]
 FOUR_OPTIONS = ["off", "frost_protection", "eco", "comfort"]
 
 
@@ -42,7 +41,9 @@ def source_device(hass: HomeAssistant, source_entry) -> dr.DeviceEntry:
 @pytest.fixture
 def select_entity(hass: HomeAssistant, source_entry, source_device) -> str:
     er.async_get(hass).async_get_or_create(
-        "select", "test", "heater_mode",
+        "select",
+        "test",
+        "heater_mode",
         config_entry=source_entry,
         device_id=source_device.id,
         suggested_object_id="heater_pilot_wire_mode",
@@ -76,6 +77,5 @@ async def setup_helper(hass: HomeAssistant, entry: MockConfigEntry) -> None:
 
 
 def climate_entity_id(hass: HomeAssistant, entry: MockConfigEntry) -> str:
-    [entity] = er.async_entries_for_config_entry(
-        er.async_get(hass), entry.entry_id)
+    [entity] = er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
     return entity.entity_id

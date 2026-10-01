@@ -1,7 +1,8 @@
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device import async_entity_id_to_device
-from homeassistant.helpers.schema_config_entry_flow import \
-    wrapped_entity_config_entry_title
+from homeassistant.helpers.schema_config_entry_flow import (
+    wrapped_entity_config_entry_title,
+)
 
 from .const import VALUES_MAPPING
 
