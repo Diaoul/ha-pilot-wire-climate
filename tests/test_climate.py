@@ -1,8 +1,11 @@
 from homeassistant.const import EVENT_HOMEASSISTANT_START
-from homeassistant.core import CoreState, HomeAssistant
+from homeassistant.core import CoreState, HomeAssistant, State
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 import pytest
-from pytest_homeassistant_custom_component.common import async_mock_service
+from pytest_homeassistant_custom_component.common import (
+    async_mock_service,
+    mock_restore_cache_with_extra_data,
+)
 
 from .conftest import (
     FOUR_OPTIONS,
@@ -105,7 +108,7 @@ async def test_set_preset_selects_matching_option(hass: HomeAssistant, select_en
     hass.states.async_set(SELECT, "Off", {"options": options})
     await call(hass, "set_hvac_mode", entity_id, hvac_mode="heat")
 
-    assert [c.data["option"] for c in calls] == ["ComfortMinus2", "Off", "Eco"]
+    assert [c.data["option"] for c in calls] == ["ComfortMinus2", "Off", "Comfort"]
 
 
 async def test_off_is_not_a_preset(hass: HomeAssistant, select_entity):
@@ -197,8 +200,53 @@ async def test_set_hvac_mode_keeps_current_preset(hass: HomeAssistant, select_en
     hass.states.async_set(SELECT, "off", {"options": SIX_OPTIONS})
     await call(hass, "set_hvac_mode", entity_id, hvac_mode="off")
     assert calls == []
+
+
+async def test_turn_on_restores_last_preset(hass: HomeAssistant, select_entity):
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+    entity_id = climate_entity_id(hass, entry)
+    calls = async_mock_service(hass, "select", "select_option")
+
+    for option in ("comfort_-1", "off", "turbo", "off"):
+        hass.states.async_set(SELECT, option, {"options": SIX_OPTIONS})
+        await hass.async_block_till_done()
     await call(hass, "set_hvac_mode", entity_id, hvac_mode="heat")
+
+    assert [c.data["option"] for c in calls] == ["comfort_-1"]
+
+
+async def test_turn_on_falls_back_to_default_preset(hass: HomeAssistant, select_entity):
+    hass.states.async_set(SELECT, "off", {"options": SIX_OPTIONS})
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+    calls = async_mock_service(hass, "select", "select_option")
+
+    await call(hass, "set_hvac_mode", climate_entity_id(hass, entry), hvac_mode="heat")
+
     assert [c.data["option"] for c in calls] == ["eco"]
+
+
+@pytest.mark.parametrize(
+    ("last_preset", "option"), [("away", "frost_protection"), ("comfort_1", "eco")]
+)
+async def test_last_preset_survives_restart(
+    hass: HomeAssistant, select_entity, last_preset, option
+):
+    hass.states.async_set(SELECT, "off", {"options": FOUR_OPTIONS})
+    mock_restore_cache_with_extra_data(
+        hass,
+        [(State("climate.heater", "off"), {"last_preset": last_preset})],
+    )
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+    entity_id = climate_entity_id(hass, entry)
+    assert entity_id == "climate.heater"
+    calls = async_mock_service(hass, "select", "select_option")
+
+    await call(hass, "set_hvac_mode", entity_id, hvac_mode="heat")
+
+    assert [c.data["option"] for c in calls] == [option]
 
 
 async def setup_with_sensors(

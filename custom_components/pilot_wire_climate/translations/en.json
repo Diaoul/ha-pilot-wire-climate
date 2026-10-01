@@ -19,7 +19,7 @@
           "power": "Power sensor used to monitor heater activity.",
           "additional_modes": "Enable additional modes (Comfort -1 \u00b0C and Comfort -2 \u00b0C).",
           "power_threshold": "Power threshold above which the heater is considered to be heating.",
-          "default_preset": "Default power-on preset"
+          "default_preset": "Preset used to turn on a thermostat that has no previous preset to go back to."
         }
       }
     }
@@ -41,7 +41,7 @@
           "power": "Power sensor used to monitor heater activity.",
           "additional_modes": "Enable additional modes (Comfort -1 \u00b0C and Comfort -2 \u00b0C).",
           "power_threshold": "Power threshold above which the heater is considered to be heating.",
-          "default_preset": "Default power-on preset"
+          "default_preset": "Preset used to turn on a thermostat that has no previous preset to go back to."
         }
       }
     }

@@ -36,6 +36,11 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device import async_entity_id_to_device
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers.restore_state import (
+    ExtraStoredData,
+    RestoredExtraData,
+    RestoreEntity,
+)
 
 from .const import (
     CONF_ADDITIONAL_MODES,
@@ -95,7 +100,7 @@ def _value(state: State) -> str | None:
     return state.state
 
 
-class PilotWireClimate(ClimateEntity):
+class PilotWireClimate(ClimateEntity, RestoreEntity):
     """Representation of a Pilot Wire device."""
 
     _attr_has_entity_name = True
@@ -130,6 +135,7 @@ class PilotWireClimate(ClimateEntity):
         self._cur_power: float | None = None
         self._cur_mode: str | None = None
         self._default_preset = default_preset
+        self._last_preset: str | None = None
 
         self._attr_unique_id = unique_id
 
@@ -137,6 +143,11 @@ class PilotWireClimate(ClimateEntity):
     async def async_added_to_hass(self) -> None:
         """Run when entity about to be added."""
         await super().async_added_to_hass()
+
+        if (data := await self.async_get_last_extra_data()) is not None:
+            last_preset = data.as_dict().get("last_preset")
+            if last_preset in PRESET_TO_VALUE:
+                self._last_preset = last_preset
 
         # Add listener
         if self.temp_entity_id is not None:
@@ -271,12 +282,19 @@ class PilotWireClimate(ClimateEntity):
         if hvac_mode == self.hvac_mode:
             # Otherwise turning on a heating thermostat would reset its preset.
             return
-        value = (
-            PRESET_TO_VALUE[self._default_preset]
-            if hvac_mode == HVACMode.HEAT
-            else VALUE_OFF
-        )
+        if hvac_mode == HVACMode.OFF:
+            value = VALUE_OFF
+        elif self._last_preset in self.preset_modes:
+            value = PRESET_TO_VALUE[self._last_preset]
+        else:
+            value = PRESET_TO_VALUE[self._default_preset]
         await self._async_set_mode_value(self._get_option(value))
+
+    @override
+    @property
+    def extra_restore_state_data(self) -> ExtraStoredData:
+        """Keep the preset to turn back on with across restarts."""
+        return RestoredExtraData({"last_preset": self._last_preset})
 
     @override
     @property
@@ -309,12 +327,16 @@ class PilotWireClimate(ClimateEntity):
     @callback
     def _async_update_mode(self, state: State | None) -> None:
         self._cur_mode = None if state is None else _value(state)
-        if self._cur_mode is not None and get_value_key(self._cur_mode) is None:
+        if self._cur_mode is None:
+            return
+        if (value := get_value_key(self._cur_mode)) is None:
             _LOGGER.warning(
                 "%s reports unknown pilot wire mode %s, shown as comfort",
                 self.preset_entity_id,
                 self._cur_mode,
             )
+        elif value != VALUE_OFF:
+            self._last_preset = VALUE_TO_PRESET[value]
 
     @callback
     def _async_update_temp(self, state: State | None) -> None:

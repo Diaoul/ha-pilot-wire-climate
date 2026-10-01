@@ -19,7 +19,7 @@
           "power": "Capteur de puissance utilisé pour surveiller l'activité du chauffage.",
           "additional_modes": "Active les modes supplémentaires (Confort -1 \u00b0C et Confort -2 \u00b0C).",
           "power_threshold": "Seuil de puissance à partir duquel le radiateur est considéré en chauffe.",
-          "default_preset": "Mode par défaut à l'allumage"
+          "default_preset": "Mode utilisé pour allumer un thermostat qui n'a pas de mode précédent auquel revenir."
         }
       }
     }
@@ -41,7 +41,7 @@
           "power": "Capteur de puissance utilisé pour surveiller l'activité du chauffage.",
           "additional_modes": "Active les modes supplémentaires (Confort -1 \u00b0C et Confort -2 \u00b0C).",
           "power_threshold": "Seuil de puissance à partir duquel le radiateur est considéré en chauffe.",
-          "default_preset": "Mode par défaut à l'allumage"
+          "default_preset": "Mode utilisé pour allumer un thermostat qui n'a pas de mode précédent auquel revenir."
         }
       }
     }
