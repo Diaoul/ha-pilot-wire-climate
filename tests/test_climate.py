@@ -54,10 +54,11 @@ async def test_set_preset_selects_matching_option(hass: HomeAssistant, select_en
     entity_id = climate_entity_id(hass, entry)
 
     await call(hass, "set_preset_mode", entity_id, preset_mode="comfort_2")
-    await call(hass, "set_hvac_mode", entity_id, hvac_mode="heat")
     await call(hass, "set_hvac_mode", entity_id, hvac_mode="off")
+    hass.states.async_set(SELECT, "Off", {"options": options})
+    await call(hass, "set_hvac_mode", entity_id, hvac_mode="heat")
 
-    assert [c.data["option"] for c in calls] == ["ComfortMinus2", "Eco", "Off"]
+    assert [c.data["option"] for c in calls] == ["ComfortMinus2", "Off", "Eco"]
 
 
 async def test_options_are_read_when_used(hass: HomeAssistant, select_entity):
@@ -97,3 +98,20 @@ async def test_input_select_source(hass: HomeAssistant):
 
     assert [(c.data["entity_id"], c.data["option"]) for c in calls] == [
         ("input_select.heater_mode", "eco")]
+
+
+async def test_set_hvac_mode_keeps_current_preset(hass: HomeAssistant, select_entity):
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+    entity_id = climate_entity_id(hass, entry)
+    calls = async_mock_service(hass, "select", "select_option")
+
+    await call(hass, "set_hvac_mode", entity_id, hvac_mode="heat")
+    await hass.services.async_call("climate", "turn_on", {"entity_id": entity_id}, blocking=True)
+    assert calls == []
+
+    hass.states.async_set(SELECT, "off", {"options": SIX_OPTIONS})
+    await call(hass, "set_hvac_mode", entity_id, hvac_mode="off")
+    assert calls == []
+    await call(hass, "set_hvac_mode", entity_id, hvac_mode="heat")
+    assert [c.data["option"] for c in calls] == ["eco"]

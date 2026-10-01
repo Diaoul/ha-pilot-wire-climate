@@ -327,6 +327,9 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
+        if hvac_mode == self.hvac_mode:
+            # Otherwise turning on a heating thermostat would reset its preset.
+            return
         value = self._default_preset if hvac_mode == HVACMode.HEAT else VALUE_OFF
         await self._async_set_mode_value(self._get_option(value))
 
