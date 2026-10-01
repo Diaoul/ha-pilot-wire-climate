@@ -1,5 +1,6 @@
 import pytest
-from homeassistant.core import HomeAssistant
+from homeassistant.const import EVENT_HOMEASSISTANT_START
+from homeassistant.core import CoreState, HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
 from pytest_homeassistant_custom_component.common import async_mock_service
 
@@ -147,6 +148,27 @@ async def setup_with_sensors(hass: HomeAssistant, power: str = "0", temperature:
     return climate_entity_id(hass, entry)
 
 
+@pytest.mark.parametrize(("option", "power", "action"), [
+    ("comfort", "1000", "heating"),
+    ("comfort", "5", "idle"),
+    ("off", "0", "off"),
+    ("off", "1000", "heating"),
+])
+async def test_hvac_action(hass: HomeAssistant, select_entity, option, power, action):
+    hass.states.async_set(SELECT, option, {"options": SIX_OPTIONS})
+    entity_id = await setup_with_sensors(hass, power=power)
+
+    assert hass.states.get(entity_id).attributes["hvac_action"] == action
+
+
+async def test_no_hvac_action_without_power_sensor(hass: HomeAssistant, select_entity):
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+
+    assert "hvac_action" not in hass.states.get(
+        climate_entity_id(hass, entry)).attributes
+
+
 async def test_sensor_updates(hass: HomeAssistant, select_entity):
     entity_id = await setup_with_sensors(hass)
     assert hass.states.get(entity_id).attributes["current_temperature"] == 20.5
@@ -164,3 +186,31 @@ async def test_sensor_updates(hass: HomeAssistant, select_entity):
     state = hass.states.get(entity_id)
     assert state.attributes["current_temperature"] is None
     assert "hvac_action" not in state.attributes
+
+
+@pytest.mark.parametrize("value", ["abc", "inf"])
+async def test_invalid_sensor_value_keeps_last_reading(hass: HomeAssistant, select_entity, caplog, value):
+    entity_id = await setup_with_sensors(hass)
+
+    hass.states.async_set(TEMPERATURE, value)
+    await hass.async_block_till_done()
+
+    assert hass.states.get(entity_id).attributes["current_temperature"] == 20.5
+    assert "Unable to update from temperature sensor" in caplog.text
+
+
+async def test_reads_sources_once_home_assistant_started(hass: HomeAssistant, select_entity):
+    hass.set_state(CoreState.not_running)
+    entity_id = await setup_with_sensors(hass, power="1000")
+    state = hass.states.get(entity_id)
+    assert state.state == "unknown"
+    assert state.attributes["current_temperature"] is None
+
+    hass.bus.async_fire(EVENT_HOMEASSISTANT_START)
+    await hass.async_block_till_done()
+
+    state = hass.states.get(entity_id)
+    assert state.state == "heat"
+    assert state.attributes["preset_mode"] == "comfort"
+    assert state.attributes["current_temperature"] == 20.5
+    assert state.attributes["hvac_action"] == "heating"
