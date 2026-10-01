@@ -220,7 +220,7 @@ class PilotWireClimate(ClimateEntity):
         self._default_preset = default_preset
 
         self._attr_has_entity_name = has_entity_name
-        self._attr_unique_id = unique_id or "pilot_wire_" + preset_entity_id
+        self._attr_unique_id = unique_id
 
     @override
     async def async_added_to_hass(self) -> None:
