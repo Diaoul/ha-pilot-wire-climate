@@ -5,7 +5,6 @@ import math
 from typing import Any, override
 
 from homeassistant.components.climate import (
-    PLATFORM_SCHEMA as CLIMATE_PLATFORM_SCHEMA,
     PRESET_AWAY,
     PRESET_COMFORT,
     PRESET_ECO,
@@ -20,8 +19,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_UNIT_OF_MEASUREMENT,
-    CONF_NAME,
-    CONF_UNIQUE_ID,
     EVENT_HOMEASSISTANT_START,
     STATE_UNAVAILABLE,
     STATE_UNKNOWN,
@@ -37,16 +34,10 @@ from homeassistant.core import (
     split_entity_id,
 )
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import entity_registry as er
-import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.device import async_entity_id_to_device
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
-from homeassistant.helpers.reload import async_setup_reload_service
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-import voluptuous as vol
 
-from . import PLATFORMS
 from .const import (
     CONF_ADDITIONAL_MODES,
     CONF_DEFAULT_PRESET,
@@ -55,8 +46,6 @@ from .const import (
     CONF_PRESET,
     CONF_TEMP,
     DEFAULT_DEFAULT_PRESET,
-    DEFAULT_NAME,
-    DOMAIN,
     PRESET_COMFORT_1,
     PRESET_COMFORT_2,
     VALUE_COMFORT,
@@ -81,79 +70,25 @@ VALUE_TO_PRESET = {
 PRESET_TO_VALUE = {preset: value for value, preset in VALUE_TO_PRESET.items()}
 
 
-PLATFORM_SCHEMA_COMMON = vol.Schema(
-    {
-        vol.Required(CONF_PRESET): cv.entity_id,
-        vol.Optional(CONF_TEMP): cv.entity_id,
-        vol.Optional(CONF_POWER): cv.entity_id,
-        vol.Optional(CONF_ADDITIONAL_MODES, default=True): cv.boolean,
-        vol.Optional(CONF_NAME): cv.string,
-        vol.Optional(CONF_UNIQUE_ID): cv.string,
-        vol.Optional(CONF_POWER_THRESHOLD): cv.positive_float,
-        vol.Optional(CONF_DEFAULT_PRESET, default=DEFAULT_DEFAULT_PRESET): vol.In(
-            [VALUE_COMFORT, VALUE_COMFORT_1, VALUE_COMFORT_2, VALUE_ECO, VALUE_FROST]
-        ),
-    }
-)
-
-PLATFORM_SCHEMA = CLIMATE_PLATFORM_SCHEMA.extend(PLATFORM_SCHEMA_COMMON.schema)
-
-
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Initialize config entry."""
-    await _async_setup_config(
-        hass,
-        PLATFORM_SCHEMA_COMMON(dict(config_entry.options)),
-        config_entry.entry_id,
-        async_add_entities,
-    )
-
-
-async def async_setup_platform(
-    hass: HomeAssistant,
-    config: ConfigType,
-    async_add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None,
-) -> None:
-    """Set up the generic thermostat platform."""
-
-    await async_setup_reload_service(hass, DOMAIN, PLATFORMS)
-    await _async_setup_config(
-        hass, config, config.get(CONF_UNIQUE_ID), async_add_entities
-    )
-
-
-async def _async_setup_config(
-    hass: HomeAssistant,
-    config: ConfigType,
-    unique_id: str | None,
-    async_add_entities: AddEntitiesCallback,
-) -> None:
-    """Set up the pilot wire climate platform."""
-    name: str | None = config.get(CONF_NAME)
-    preset_entity_id: str = config[CONF_PRESET]
-    temp_entity_id: str | None = config.get(CONF_TEMP)
-    power_entity_id: str | None = config.get(CONF_POWER)
-    additional_modes: bool = config[CONF_ADDITIONAL_MODES]
-    power_threshold: float = config.get(CONF_POWER_THRESHOLD, 0)
-    default_preset: str = config[CONF_DEFAULT_PRESET]
-
+    options = config_entry.options
     async_add_entities(
         [
             PilotWireClimate(
                 hass,
-                name,
-                preset_entity_id,
-                temp_entity_id,
-                power_entity_id,
-                additional_modes,
-                power_threshold,
-                default_preset,
-                unique_id,
+                config_entry.title,
+                options[CONF_PRESET],
+                options.get(CONF_TEMP),
+                options.get(CONF_POWER),
+                options.get(CONF_ADDITIONAL_MODES, True),
+                options.get(CONF_POWER_THRESHOLD, 0),
+                options.get(CONF_DEFAULT_PRESET, DEFAULT_DEFAULT_PRESET),
+                config_entry.entry_id,
             )
         ]
     )
@@ -177,6 +112,7 @@ def _value(state: State) -> str | None:
 class PilotWireClimate(ClimateEntity):
     """Representation of a Pilot Wire device."""
 
+    _attr_has_entity_name = True
     _attr_should_poll = False
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_translation_key: str = "pilot_wire"
@@ -184,30 +120,20 @@ class PilotWireClimate(ClimateEntity):
     def __init__(
         self,
         hass: HomeAssistant,
-        name: str | None,
+        name: str,
         preset_entity_id: str,
         temp_entity_id: str | None,
         power_entity_id: str | None,
         additional_modes: bool,
         power_threshold: float,
         default_preset: str,
-        unique_id: str | None,
+        unique_id: str,
     ) -> None:
         """Initialize the climate device."""
 
-        registry = er.async_get(hass)
-        preset_entity = registry.async_get(preset_entity_id)
-        has_entity_name = preset_entity.has_entity_name if preset_entity else False
-
         self.device_entry = async_entity_id_to_device(hass, preset_entity_id)
-
-        if name:
-            self._attr_name = name
-        elif has_entity_name and self.device_entry:
-            # The thermostat is the device's main feature.
-            self._attr_name = None
-        else:
-            self._attr_name = DEFAULT_NAME
+        # On a device, the thermostat is the device's main feature.
+        self._attr_name = None if self.device_entry else name
 
         self.preset_entity_id = preset_entity_id
         self.temp_entity_id = temp_entity_id
@@ -219,7 +145,6 @@ class PilotWireClimate(ClimateEntity):
         self._cur_mode: str | None = None
         self._default_preset = default_preset
 
-        self._attr_has_entity_name = has_entity_name
         self._attr_unique_id = unique_id
 
     @override

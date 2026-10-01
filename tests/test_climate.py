@@ -1,8 +1,6 @@
 from homeassistant.const import EVENT_HOMEASSISTANT_START
 from homeassistant.core import CoreState, HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import entity_registry as er
-from homeassistant.setup import async_setup_component
 import pytest
 from pytest_homeassistant_custom_component.common import async_mock_service
 
@@ -269,7 +267,7 @@ async def test_named_after_device(hass: HomeAssistant, select_entity):
     )
 
 
-async def test_default_name_without_device(hass: HomeAssistant):
+async def test_named_after_entry_without_device(hass: HomeAssistant):
     hass.states.async_set(
         "input_select.heater_mode", "comfort", {"options": SIX_OPTIONS}
     )
@@ -278,7 +276,7 @@ async def test_default_name_without_device(hass: HomeAssistant):
 
     assert (
         hass.states.get(climate_entity_id(hass, entry)).attributes["friendly_name"]
-        == "Thermostat"
+        == "Pilot wire mode"
     )
 
 
@@ -307,27 +305,3 @@ async def test_unknown_mode_is_logged(hass: HomeAssistant, select_entity, caplog
         == "comfort"
     )
     assert "unknown pilot wire mode turbo" in caplog.text
-
-
-async def test_yaml_unique_id_is_optional(hass: HomeAssistant, select_entity):
-    assert await async_setup_component(
-        hass,
-        "climate",
-        {
-            "climate": [
-                {"platform": "pilot_wire_climate", "presets": SELECT, "name": "A"},
-                {
-                    "platform": "pilot_wire_climate",
-                    "presets": SELECT,
-                    "name": "B",
-                    "unique_id": "b",
-                },
-            ]
-        },
-    )
-    await hass.async_block_till_done()
-
-    registry = er.async_get(hass)
-    assert hass.states.get("climate.a").state == "heat"
-    assert registry.async_get("climate.a") is None
-    assert registry.async_get("climate.b").unique_id == "b"

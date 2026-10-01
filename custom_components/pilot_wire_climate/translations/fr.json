@@ -46,12 +46,6 @@
       }
     }
   },
-  "services": {
-    "reload": {
-      "name": "Recharger",
-      "description": "Recharge les thermostats fil pilote depuis la configuration YAML."
-    }
-  },
   "entity": {
     "climate": {
       "pilot_wire": {

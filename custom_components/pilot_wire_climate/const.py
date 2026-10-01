@@ -3,7 +3,6 @@
 from homeassistant.components.climate import PRESET_AWAY, PRESET_COMFORT, PRESET_ECO
 
 DOMAIN = "pilot_wire_climate"
-DEFAULT_NAME = "Thermostat"
 CONF_PRESET = "presets"
 CONF_TEMP = "temperature"
 CONF_POWER = "power"

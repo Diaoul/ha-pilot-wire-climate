@@ -31,10 +31,10 @@ The integration is compatible with the following devices or any climate manageab
 ### Option 2: Manual Installation
 1. Copy the integration files to your Home Assistant custom components directory.
 2. Restart Home Assistant.
-3. Add the integration through the Home Assistant UI or by modifying the `configuration.yaml` file.
+3. Add the integration through the Home Assistant UI.
 
 ## Configuration
-To set up this integration, you can either add it through the Home Assistant UI or configure it manually. Below is a sample `configuration.yaml` setup.
+This integration is set up from the Home Assistant UI only.
 
 > [!IMPORTANT]  
 > This integration is implemented as a **Helper** in Home Assistant and is not a full-fledged custom integration. 
@@ -48,38 +48,6 @@ To set up this integration, you can either add it through the Home Assistant UI 
 >
 > Once configured, the climate entity will appear in the Helpers tab. It will be automatically linked to the device of the select entity you chose during setup.
 
-
-## YAML configuration
-
-If you prefer to use `yaml`, you can, but it's not recommended as more and more integrations are moved to the UI. All the options are available in the UI.
-
-| Key                | Type    | Required | Description                                                                                                               |
-| :----------------- | :------ | :------- | :------------------------------------------------------------------------------------------------------------------------ |
-| `platform`         | string  | yes      | pilot_wire_climate                                                                                                        |
-| `presets`          | string  | yes      | Select entity id to adjust the pilot wire preset modes                                                                    |
-| `power`            | string  | no       | Power sensor to detect whether the heating is on or off                                                                   |
-| `temperature`      | string  | no       | Temperature sensor id (for display)                                                                                       |
-| `additional_modes` | boolean | no       | 6-order support (add Comfort -1 and Comfort -2 preset)                                                                    |
-| `power_threshold`  | integer | no       | Power threshold (in watts) above which the heater is considered to be heating                                             |
-| `default_preset`   | string  | no       | Default 'power on' preset  from "frost_protection", "eco", "comfort-2", "comfort-1" "comfort"                                                                        |
-| `name`             | string  | no       | Name to use in the frontend                                                                                               |
-| `unique_id`        | string  | no       | An ID that uniquely identifies this climate. If two climates have the same unique ID, Home Assistant will raise an error  |
-
-
-The unique id is recommended to allow icon, entity_id or name changes from the UI.
-
-```yaml
-climate:
-  - platform: pilot_wire_climate
-    name: Living Room Heater
-    unique_id: living_room_heater_climate
-    presets: select.heater_preset
-    power: sensor.heater_power
-    power_threshold: 10
-    temperature: sensor.living_room_temperature
-    default_preset: eco
-    additional_modes: true
-  ```
 
 ## 🤝 Contributing
 

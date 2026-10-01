@@ -46,12 +46,6 @@
       }
     }
   },
-  "services": {
-    "reload": {
-      "name": "Reload",
-      "description": "Reloads pilot wire thermostats from the YAML configuration."
-    }
-  },
   "entity": {
     "climate": {
       "pilot_wire": {

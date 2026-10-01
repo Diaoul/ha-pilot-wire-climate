@@ -31,10 +31,10 @@ L'intégration est compatible avec les appareils suivants ou tout thermostat con
 ### Option 2 : Installation manuelle
 1. Copiez les fichiers de l'intégration dans le répertoire des composants personnalisés de Home Assistant.
 2. Redémarrez Home Assistant.
-3. Ajoutez l'intégration via l'interface utilisateur de Home Assistant ou en modifiant le fichier `configuration.yaml`.
+3. Ajoutez l'intégration via l'interface utilisateur de Home Assistant.
 
 ## Configuration
-Pour configurer cette intégration, vous pouvez l'ajouter via l'interface utilisateur de Home Assistant ou configurer manuellement via YAML.
+Cette intégration se configure uniquement via l'interface utilisateur de Home Assistant.
 
 > [!IMPORTANT]  
 > Cette intégration est implémentée comme un **Helper** dans Home Assistant et non comme une intégration personnalisée classique.
@@ -47,37 +47,6 @@ Pour configurer cette intégration, vous pouvez l'ajouter via l'interface utilis
 > 5. Thermostat Fil Pilote
 >
 > Une fois configuré, l'entité climate apparaîtra dans l'onglet Entrées. Elle sera également automatiquement liée à l'appareil de l'entité select choisie lors de la configuration.
-
-## Configuration YAML
-
-Bien que vous puissiez utiliser `yaml`, il est recommandé d'utiliser l'interface utilisateur, car de plus en plus d'intégrations sont adaptées à cette méthode. Toutes les options sont disponibles dans l'interface utilisateur.
-
-| Clé                | Type    | Requis   | Description                                                                                                                     |
-| :----------------- | :------ | :------- | :------------------------------------------------------------------------------------------------------------------------------ |
-| `platform`         | string  | oui      | `pilot_wire_climate`                                                                                                            |
-| `presets`          | string  | oui      | ID de l'entité select pour ajuster les modes prédéfinis du fil pilote                                                           |
-| `power`            | string  | non      | ID de l'entité pour détecter si le chauffage est actif ou non                                                                   |
-| `temperature`      | string  | non      | ID du capteur de température (pour l'affichage)                                                                                 |
-| `additional_modes` | boolean | non      | Prise en charge des 6 ordres (ajoute les modes Confort -1 et Confort -2)                                                        |
-| `power_threshold`  | integer | non      | Seuil de puissance (en watts) à partir duquel le radiateur est considéré en chauffe                                             |
-| `default_preset`   | string  | no       | Mode par défaut à l'allumage:  "frost_protection", "eco", "comfort-2", "comfort-1" "comfort"                                                                             |
-| `name`             | string  | non      | Nom à afficher dans l'interface utilisateur.                                                                                    |
-| `unique_id`        | string  | non      | Un identifiant unique pour ce climat. Si deux climats ont le même identifiant unique, Home Assistant renverra une erreur.       |
-
-L’identifiant unique est recommandé pour permettre des modifications de l'icône, de l'ID d'entité ou du nom via l'interface utilisateur.
-
-```yaml
-climate:
-  - platform: pilot_wire_climate
-    name: Radiateur Salon
-    unique_id: radiateur_salon_climate
-    presets: select.radiateur_mode
-    power: sensor.radiateur_puissance
-    power_threshold: 10
-    temperature: sensor.salon_temperature
-    default_preset: eco
-    additional_modes: true
-  ```
 
 ## 🤝 Contributions
 Les contributions sont les bienvenues ! N'hésitez pas à :
