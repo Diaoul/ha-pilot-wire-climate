@@ -6,8 +6,7 @@
           "preset_mode": {
             "state": {
               "comfort_1": "mdi:numeric-1-circle",
-              "comfort_2": "mdi:numeric-2-circle",
-              "none": "mdi:power"
+              "comfort_2": "mdi:numeric-2-circle"
             }
           }
         }

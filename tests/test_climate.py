@@ -1,6 +1,6 @@
 from homeassistant.const import EVENT_HOMEASSISTANT_START
 from homeassistant.core import CoreState, HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 import pytest
 from pytest_homeassistant_custom_component.common import async_mock_service
 
@@ -40,16 +40,18 @@ async def test_preset_follows_select(hass: HomeAssistant, select_entity):
     await setup_helper(hass, entry)
     entity_id = climate_entity_id(hass, entry)
 
-    for option, preset in [
-        ("off", "none"),
-        ("frost_protection", "away"),
-        ("eco", "eco"),
-        ("comfort_-1", "comfort_1"),
-        ("comfort_-2", "comfort_2"),
+    for option, mode, preset in [
+        ("off", "off", None),
+        ("frost_protection", "heat", "away"),
+        ("eco", "heat", "eco"),
+        ("comfort_-1", "heat", "comfort_1"),
+        ("comfort_-2", "heat", "comfort_2"),
     ]:
         hass.states.async_set(SELECT, option, {"options": SIX_OPTIONS})
         await hass.async_block_till_done()
-        assert hass.states.get(entity_id).attributes["preset_mode"] == preset
+        state = hass.states.get(entity_id)
+        assert state.state == mode
+        assert state.attributes["preset_mode"] == preset
 
 
 async def test_comfort_minus_is_comfort_without_additional_modes(
@@ -86,6 +88,16 @@ async def test_set_preset_selects_matching_option(hass: HomeAssistant, select_en
     await call(hass, "set_hvac_mode", entity_id, hvac_mode="heat")
 
     assert [c.data["option"] for c in calls] == ["ComfortMinus2", "Off", "Eco"]
+
+
+async def test_off_is_not_a_preset(hass: HomeAssistant, select_entity):
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+    entity_id = climate_entity_id(hass, entry)
+
+    assert "none" not in hass.states.get(entity_id).attributes["preset_modes"]
+    with pytest.raises(ServiceValidationError):
+        await call(hass, "set_preset_mode", entity_id, preset_mode="none")
 
 
 async def test_options_are_read_when_used(hass: HomeAssistant, select_entity):

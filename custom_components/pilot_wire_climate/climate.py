@@ -8,7 +8,6 @@ from homeassistant.components.climate import (
     PRESET_AWAY,
     PRESET_COMFORT,
     PRESET_ECO,
-    PRESET_NONE,
     ClimateEntity,
     ClimateEntityFeature,
     HVACAction,
@@ -60,7 +59,6 @@ from .util import get_value_key
 _LOGGER = logging.getLogger(__name__)
 
 VALUE_TO_PRESET = {
-    VALUE_OFF: PRESET_NONE,
     VALUE_FROST: PRESET_AWAY,
     VALUE_ECO: PRESET_ECO,
     VALUE_COMFORT: PRESET_COMFORT,
@@ -222,7 +220,7 @@ class PilotWireClimate(ClimateEntity):
         if self._cur_power is not None:
             if self._cur_power > self.power_threshold:
                 value = HVACAction.HEATING
-            elif self.preset_mode == PRESET_NONE:
+            elif self.hvac_mode == HVACMode.OFF:
                 value = HVACAction.OFF
             else:
                 value = HVACAction.IDLE
@@ -252,9 +250,8 @@ class PilotWireClimate(ClimateEntity):
                 PRESET_COMFORT_2,
                 PRESET_ECO,
                 PRESET_AWAY,
-                PRESET_NONE,
             ]
-        return [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY, PRESET_NONE]
+        return [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY]
 
     @override
     @property
@@ -264,6 +261,8 @@ class PilotWireClimate(ClimateEntity):
             return None
         if (value := get_value_key(self._cur_mode)) is None:
             return PRESET_COMFORT
+        if value == VALUE_OFF:
+            return None
         preset = VALUE_TO_PRESET[value]
         return preset if preset in self.preset_modes else PRESET_COMFORT
 
@@ -293,9 +292,11 @@ class PilotWireClimate(ClimateEntity):
     @property
     def hvac_mode(self) -> HVACMode | None:
         """Return hvac operation ie. heat, off mode."""
-        if self.preset_mode is not None:
-            return HVACMode.OFF if self.preset_mode == PRESET_NONE else HVACMode.HEAT
-        return None
+        if self._cur_mode is None:
+            return None
+        if get_value_key(self._cur_mode) == VALUE_OFF:
+            return HVACMode.OFF
+        return HVACMode.HEAT
 
     @callback
     def _async_temp_changed(self, event: Event[EventStateChangedData]) -> None:
