@@ -47,25 +47,13 @@ from .const import (
     DEFAULT_DEFAULT_PRESET,
     PRESET_COMFORT_1,
     PRESET_COMFORT_2,
-    VALUE_COMFORT,
-    VALUE_COMFORT_1,
-    VALUE_COMFORT_2,
-    VALUE_ECO,
-    VALUE_FROST,
+    PRESET_TO_VALUE,
     VALUE_OFF,
+    VALUE_TO_PRESET,
 )
 from .util import get_value_key
 
 _LOGGER = logging.getLogger(__name__)
-
-VALUE_TO_PRESET = {
-    VALUE_FROST: PRESET_AWAY,
-    VALUE_ECO: PRESET_ECO,
-    VALUE_COMFORT: PRESET_COMFORT,
-    VALUE_COMFORT_1: PRESET_COMFORT_1,
-    VALUE_COMFORT_2: PRESET_COMFORT_2,
-}
-PRESET_TO_VALUE = {preset: value for value, preset in VALUE_TO_PRESET.items()}
 
 
 async def async_setup_entry(
@@ -283,7 +271,11 @@ class PilotWireClimate(ClimateEntity):
         if hvac_mode == self.hvac_mode:
             # Otherwise turning on a heating thermostat would reset its preset.
             return
-        value = self._default_preset if hvac_mode == HVACMode.HEAT else VALUE_OFF
+        value = (
+            PRESET_TO_VALUE[self._default_preset]
+            if hvac_mode == HVACMode.HEAT
+            else VALUE_OFF
+        )
         await self._async_set_mode_value(self._get_option(value))
 
     @override

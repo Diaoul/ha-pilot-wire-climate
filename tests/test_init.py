@@ -1,5 +1,6 @@
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr, entity_registry as er
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.pilot_wire_climate.const import DOMAIN
@@ -36,7 +37,7 @@ async def test_migration_removes_duplicate_device(
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
 
-    assert entry.minor_version == 4
+    assert entry.minor_version == 5
     assert device_registry.async_get(duplicate.id) is None
     [entity] = er.async_entries_for_config_entry(er.async_get(hass), entry.entry_id)
     assert entity.device_id == source_device.id
@@ -51,8 +52,21 @@ async def test_migration_maps_old_default_preset(hass: HomeAssistant, select_ent
     )
     await setup_helper(hass, entry)
 
-    assert entry.options["default_preset"] == "frost_protection"
-    assert entry.minor_version == 4
+    assert entry.options["default_preset"] == "away"
+    assert entry.minor_version == 5
+
+
+@pytest.mark.parametrize(
+    ("stored", "migrated"),
+    [("comfort-1", "comfort_1"), ("frost_protection", "away"), ("eco", "eco")],
+)
+async def test_migration_stores_default_preset_as_preset(
+    hass: HomeAssistant, select_entity, stored, migrated
+):
+    entry = helper_entry(minor_version=4, default_preset=stored)
+    await setup_helper(hass, entry)
+
+    assert entry.options["default_preset"] == migrated
 
 
 async def test_follows_select_rename(hass: HomeAssistant, select_entity):

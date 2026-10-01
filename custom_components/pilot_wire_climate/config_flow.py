@@ -23,11 +23,7 @@ from .const import (
     CONF_TEMP,
     DEFAULT_DEFAULT_PRESET,
     DOMAIN,
-    VALUE_COMFORT,
-    VALUE_COMFORT_1,
-    VALUE_COMFORT_2,
-    VALUE_ECO,
-    VALUE_FROST,
+    PRESET_TO_VALUE,
 )
 from .util import async_hide_select, config_entry_title
 
@@ -55,14 +51,9 @@ OPTIONS_SCHEMA: VolDictType = {
         CONF_DEFAULT_PRESET, default=DEFAULT_DEFAULT_PRESET
     ): selector.SelectSelector(
         selector.SelectSelectorConfig(
-            options=[
-                VALUE_COMFORT,
-                VALUE_COMFORT_1,
-                VALUE_COMFORT_2,
-                VALUE_ECO,
-                VALUE_FROST,
-            ],
+            options=list(PRESET_TO_VALUE),
             mode=selector.SelectSelectorMode.DROPDOWN,
+            translation_key=CONF_DEFAULT_PRESET,
         )
     ),
 }
@@ -80,7 +71,7 @@ class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     """Handle a config or options flow."""
 
     VERSION = 1
-    MINOR_VERSION = 4
+    MINOR_VERSION = 5
 
     config_flow = CONFIG_FLOW
     options_flow = OPTIONS_FLOW

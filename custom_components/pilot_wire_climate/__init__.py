@@ -22,8 +22,7 @@ from .const import (
     CONF_PRESET,
     CONF_TEMP,
     DEFAULT_DEFAULT_PRESET,
-    OLD_PRESET_VALUE_MAPPING,
-    VALUES_MAPPING,
+    VALUE_TO_PRESET,
 )
 from .util import async_hide_select, async_unhide_select, config_entry_title
 
@@ -107,11 +106,12 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         return False
 
     options = {**config_entry.options}
-    default_preset = options.get(CONF_DEFAULT_PRESET)
-    if default_preset is None:
-        options[CONF_DEFAULT_PRESET] = DEFAULT_DEFAULT_PRESET
-    elif default_preset not in VALUES_MAPPING:
-        options[CONF_DEFAULT_PRESET] = OLD_PRESET_VALUE_MAPPING[default_preset]
+    if config_entry.minor_version < 5:
+        # Stored as a preset before minor version 2, then as a select value.
+        default_preset = options.get(CONF_DEFAULT_PRESET, DEFAULT_DEFAULT_PRESET)
+        options[CONF_DEFAULT_PRESET] = VALUE_TO_PRESET.get(
+            default_preset, default_preset
+        )
 
     if config_entry.minor_version < 3:
         # Earlier versions put the source device's identifiers in the climate
@@ -131,6 +131,6 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         title = config_entry_title(hass, options[CONF_PRESET])
 
     hass.config_entries.async_update_entry(
-        config_entry, title=title, options=options, minor_version=4
+        config_entry, title=title, options=options, minor_version=5
     )
     return True

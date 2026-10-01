@@ -46,6 +46,17 @@
       }
     }
   },
+  "selector": {
+    "default_preset": {
+      "options": {
+        "comfort": "Comfort",
+        "comfort_1": "Comfort -1 °C",
+        "comfort_2": "Comfort -2 °C",
+        "eco": "Eco",
+        "away": "Frost protection"
+      }
+    }
+  },
   "entity": {
     "climate": {
       "pilot_wire": {

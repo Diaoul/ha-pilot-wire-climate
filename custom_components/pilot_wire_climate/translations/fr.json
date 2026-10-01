@@ -46,6 +46,17 @@
       }
     }
   },
+  "selector": {
+    "default_preset": {
+      "options": {
+        "comfort": "Confort",
+        "comfort_1": "Confort -1 °C",
+        "comfort_2": "Confort -2 °C",
+        "eco": "Éco",
+        "away": "Hors-gel"
+      }
+    }
+  },
   "entity": {
     "climate": {
       "pilot_wire": {
