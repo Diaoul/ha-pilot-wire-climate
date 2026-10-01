@@ -217,15 +217,13 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
     @property
     def hvac_action(self) -> HVACAction | None:
         """Return the current running hvac operation."""
-        value = None
+        if self._cur_power is not None and self._cur_power > self.power_threshold:
+            return HVACAction.HEATING
+        if self.hvac_mode == HVACMode.OFF:
+            return HVACAction.OFF
         if self._cur_power is not None:
-            if self._cur_power > self.power_threshold:
-                value = HVACAction.HEATING
-            elif self.hvac_mode == HVACMode.OFF:
-                value = HVACAction.OFF
-            else:
-                value = HVACAction.IDLE
-        return value
+            return HVACAction.IDLE
+        return None
 
     @property
     def power_threshold(self) -> float:

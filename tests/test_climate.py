@@ -279,9 +279,12 @@ async def test_no_hvac_action_without_power_sensor(hass: HomeAssistant, select_e
     entry = helper_entry()
     await setup_helper(hass, entry)
 
-    assert (
-        "hvac_action" not in hass.states.get(climate_entity_id(hass, entry)).attributes
-    )
+    entity_id = climate_entity_id(hass, entry)
+    assert "hvac_action" not in hass.states.get(entity_id).attributes
+
+    hass.states.async_set(SELECT, "off", {"options": SIX_OPTIONS})
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id).attributes["hvac_action"] == "off"
 
 
 async def test_sensor_updates(hass: HomeAssistant, select_entity):
