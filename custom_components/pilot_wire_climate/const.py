@@ -6,6 +6,7 @@ DOMAIN = "pilot_wire_climate"
 CONF_SELECT = "select"
 CONF_TEMPERATURE_SENSOR = "temperature_sensor"
 CONF_POWER_SENSOR = "power_sensor"
+CONF_HUMIDITY_SENSOR = "humidity_sensor"
 OLD_OPTION_KEYS = {
     "presets": CONF_SELECT,
     "temperature": CONF_TEMPERATURE_SENSOR,

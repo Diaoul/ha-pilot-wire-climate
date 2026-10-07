@@ -18,6 +18,7 @@ from homeassistant.helpers.schema_config_entry_flow import (
 
 from .const import (
     CONF_DEFAULT_PRESET,
+    CONF_HUMIDITY_SENSOR,
     CONF_POWER_SENSOR,
     CONF_SELECT,
     CONF_TEMPERATURE_SENSOR,
@@ -58,7 +59,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: PilotWireConfigEntry) ->
         )
     )
 
-    for key in (CONF_TEMPERATURE_SENSOR, CONF_POWER_SENSOR):
+    for key in (CONF_TEMPERATURE_SENSOR, CONF_HUMIDITY_SENSOR, CONF_POWER_SENSOR):
         if not (sensor_entity_id := entry.options.get(key)):
             continue
 

@@ -45,6 +45,7 @@ from homeassistant.helpers.restore_state import (
 from .const import (
     CONF_ADDITIONAL_MODES,
     CONF_DEFAULT_PRESET,
+    CONF_HUMIDITY_SENSOR,
     CONF_POWER_SENSOR,
     CONF_POWER_THRESHOLD,
     CONF_SELECT,
@@ -75,6 +76,7 @@ async def async_setup_entry(
                 config_entry.title,
                 options[CONF_SELECT],
                 options.get(CONF_TEMPERATURE_SENSOR),
+                options.get(CONF_HUMIDITY_SENSOR),
                 options.get(CONF_POWER_SENSOR),
                 options.get(CONF_ADDITIONAL_MODES, True),
                 options.get(CONF_POWER_THRESHOLD, 0),
@@ -114,6 +116,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         name: str,
         preset_entity_id: str,
         temp_entity_id: str | None,
+        humidity_entity_id: str | None,
         power_entity_id: str | None,
         additional_modes: bool,
         power_threshold: float,
@@ -128,10 +131,12 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
 
         self.preset_entity_id = preset_entity_id
         self.temp_entity_id = temp_entity_id
+        self.humidity_entity_id = humidity_entity_id
         self.power_entity_id = power_entity_id
         self.additional_modes = additional_modes
         self._power_threshold = power_threshold
         self._cur_temperature: float | None = None
+        self._cur_humidity: float | None = None
         self._cur_power: float | None = None
         self._cur_mode: str | None = None
         self._default_preset = default_preset
@@ -157,6 +162,13 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
                 )
             )
 
+        if self.humidity_entity_id is not None:
+            self.async_on_remove(
+                async_track_state_change_event(
+                    self.hass, [self.humidity_entity_id], self._async_humidity_changed
+                )
+            )
+
         if self.power_entity_id is not None:
             self.async_on_remove(
                 async_track_state_change_event(
@@ -176,6 +188,10 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             self._async_update_mode(self.hass.states.get(self.preset_entity_id))
             if self.temp_entity_id is not None:
                 self._async_update_temp(self.hass.states.get(self.temp_entity_id))
+            if self.humidity_entity_id is not None:
+                self._async_update_humidity(
+                    self.hass.states.get(self.humidity_entity_id)
+                )
             if self.power_entity_id is not None:
                 self._async_update_power(self.hass.states.get(self.power_entity_id))
             self.async_write_ha_state()
@@ -235,6 +251,12 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
     def current_temperature(self) -> float | None:
         """Return the sensor temperature."""
         return self._cur_temperature
+
+    @override
+    @property
+    def current_humidity(self) -> float | None:
+        """Return the sensor humidity."""
+        return self._cur_humidity
 
     # Presets
 
@@ -311,6 +333,12 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         self.async_write_ha_state()
 
     @callback
+    def _async_humidity_changed(self, event: Event[EventStateChangedData]) -> None:
+        """Handle humidity changes."""
+        self._async_update_humidity(event.data["new_state"])
+        self.async_write_ha_state()
+
+    @callback
     def _async_power_changed(self, event: Event[EventStateChangedData]) -> None:
         """Handle power changes."""
         self._async_update_power(event.data["new_state"])
@@ -348,6 +376,16 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
         if unit in (UnitOfTemperature.CELSIUS, UnitOfTemperature.FAHRENHEIT):
             self._attr_temperature_unit = unit
+
+    @callback
+    def _async_update_humidity(self, state: State | None) -> None:
+        if state is None or (raw := _value(state)) is None:
+            self._cur_humidity = None
+            return
+        if (value := _finite_float(raw)) is None:
+            _LOGGER.error("Unable to update from humidity sensor: %s", raw)
+            return
+        self._cur_humidity = value
 
     @callback
     def _async_update_power(self, state: State | None) -> None:

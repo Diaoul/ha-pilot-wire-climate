@@ -8,6 +8,7 @@
         "data": {
           "select": "Entité de sélection",
           "temperature_sensor": "Capteur de température",
+          "humidity_sensor": "Capteur d'humidité",
           "power_sensor": "Capteur de puissance",
           "additional_modes": "Modes supplémentaires",
           "power_threshold": "Seuil de puissance",
@@ -16,6 +17,7 @@
         "data_description": {
           "select": "Entité de sélection utilisée pour contrôler les modes.",
           "temperature_sensor": "Capteur de température reflétant la température actuelle.",
+          "humidity_sensor": "Capteur d'humidité reflétant l'humidité actuelle.",
           "power_sensor": "Capteur de puissance utilisé pour surveiller l'activité du chauffage.",
           "additional_modes": "Active les modes supplémentaires (Confort -1 \u00b0C et Confort -2 \u00b0C).",
           "power_threshold": "Seuil de puissance à partir duquel le radiateur est considéré en chauffe.",
@@ -30,6 +32,7 @@
         "data": {
           "select": "Entité de sélection",
           "temperature_sensor": "Capteur de température",
+          "humidity_sensor": "Capteur d'humidité",
           "power_sensor": "Capteur de puissance",
           "additional_modes": "Modes supplémentaires",
           "power_threshold": "Seuil de puissance",
@@ -38,6 +41,7 @@
         "data_description": {
           "select": "Entité de sélection utilisée pour contrôler les modes.",
           "temperature_sensor": "Capteur de température reflétant la température actuelle.",
+          "humidity_sensor": "Capteur d'humidité reflétant l'humidité actuelle.",
           "power_sensor": "Capteur de puissance utilisé pour surveiller l'activité du chauffage.",
           "additional_modes": "Active les modes supplémentaires (Confort -1 \u00b0C et Confort -2 \u00b0C).",
           "power_threshold": "Seuil de puissance à partir duquel le radiateur est considéré en chauffe.",

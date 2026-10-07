@@ -87,7 +87,8 @@ async def test_follows_select_rename(hass: HomeAssistant, select_entity):
 
 async def test_follows_sensor_rename(hass: HomeAssistant, select_entity, source_entry):
     registry = er.async_get(hass)
-    for sensor in ("temperature", "power"):
+    sensors = ("temperature", "humidity", "power")
+    for sensor in sensors:
         registry.async_get_or_create(
             "sensor",
             "test",
@@ -96,22 +97,18 @@ async def test_follows_sensor_rename(hass: HomeAssistant, select_entity, source_
             suggested_object_id=f"heater_{sensor}",
         )
     entry = helper_entry(
-        temperature_sensor="sensor.heater_temperature",
-        power_sensor="sensor.heater_power",
+        **{f"{sensor}_sensor": f"sensor.heater_{sensor}" for sensor in sensors}
     )
     await setup_helper(hass, entry)
 
-    registry.async_update_entity(
-        "sensor.heater_temperature", new_entity_id="sensor.new_temperature"
-    )
-    await hass.async_block_till_done()
-    registry.async_update_entity(
-        "sensor.heater_power", new_entity_id="sensor.new_power"
-    )
-    await hass.async_block_till_done()
+    for sensor in sensors:
+        registry.async_update_entity(
+            f"sensor.heater_{sensor}", new_entity_id=f"sensor.new_{sensor}"
+        )
+        await hass.async_block_till_done()
 
-    assert entry.options["temperature_sensor"] == "sensor.new_temperature"
-    assert entry.options["power_sensor"] == "sensor.new_power"
+    for sensor in sensors:
+        assert entry.options[f"{sensor}_sensor"] == f"sensor.new_{sensor}"
 
 
 async def test_migration_titles_entry_after_device(hass: HomeAssistant, select_entity):

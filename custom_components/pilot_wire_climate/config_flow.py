@@ -17,6 +17,7 @@ import voluptuous as vol
 from .const import (
     CONF_ADDITIONAL_MODES,
     CONF_DEFAULT_PRESET,
+    CONF_HUMIDITY_SENSOR,
     CONF_POWER_SENSOR,
     CONF_POWER_THRESHOLD,
     CONF_SELECT,
@@ -34,6 +35,11 @@ OPTIONS_SCHEMA: VolDictType = {
     vol.Optional(CONF_TEMPERATURE_SENSOR): selector.EntitySelector(
         selector.EntitySelectorConfig(
             domain=SENSOR_DOMAIN, device_class=SensorDeviceClass.TEMPERATURE
+        )
+    ),
+    vol.Optional(CONF_HUMIDITY_SENSOR): selector.EntitySelector(
+        selector.EntitySelectorConfig(
+            domain=SENSOR_DOMAIN, device_class=SensorDeviceClass.HUMIDITY
         )
     ),
     vol.Optional(CONF_POWER_SENSOR): selector.EntitySelector(

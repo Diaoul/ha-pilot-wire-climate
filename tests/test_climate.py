@@ -9,6 +9,7 @@ from pytest_homeassistant_custom_component.common import (
 
 from .conftest import (
     FOUR_OPTIONS,
+    HUMIDITY,
     POWER,
     SELECT,
     SIX_OPTIONS,
@@ -253,9 +254,13 @@ async def setup_with_sensors(
     hass: HomeAssistant, power: str = "0", temperature: str = "20.5"
 ):
     hass.states.async_set(TEMPERATURE, temperature)
+    hass.states.async_set(HUMIDITY, "55")
     hass.states.async_set(POWER, power)
     entry = helper_entry(
-        temperature_sensor=TEMPERATURE, power_sensor=POWER, power_threshold=5
+        temperature_sensor=TEMPERATURE,
+        humidity_sensor=HUMIDITY,
+        power_sensor=POWER,
+        power_threshold=5,
     )
     await setup_helper(hass, entry)
     return climate_entity_id(hass, entry)
@@ -291,20 +296,26 @@ async def test_no_hvac_action_without_power_sensor(hass: HomeAssistant, select_e
 
 async def test_sensor_updates(hass: HomeAssistant, select_entity):
     entity_id = await setup_with_sensors(hass)
-    assert hass.states.get(entity_id).attributes["current_temperature"] == 20.5
+    state = hass.states.get(entity_id)
+    assert state.attributes["current_temperature"] == 20.5
+    assert state.attributes["current_humidity"] == 55
 
     hass.states.async_set(TEMPERATURE, "21.5")
+    hass.states.async_set(HUMIDITY, "60.5")
     hass.states.async_set(POWER, "800")
     await hass.async_block_till_done()
     state = hass.states.get(entity_id)
     assert state.attributes["current_temperature"] == 21.5
+    assert state.attributes["current_humidity"] == 60.5
     assert state.attributes["hvac_action"] == "heating"
 
     hass.states.async_set(TEMPERATURE, "unavailable")
+    hass.states.async_set(HUMIDITY, "unavailable")
     hass.states.async_set(POWER, "unknown")
     await hass.async_block_till_done()
     state = hass.states.get(entity_id)
     assert state.attributes["current_temperature"] is None
+    assert "current_humidity" not in state.attributes
     assert "hvac_action" not in state.attributes
 
 

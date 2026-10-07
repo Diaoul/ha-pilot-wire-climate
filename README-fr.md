@@ -4,7 +4,7 @@
 [![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/Diaoul/ha-pilot-wire-climate/blob/master/README-fr.md)
 
 ## Vue d'ensemble
-Cette intégration pour Home Assistant simplifie l'installation de modules fil pilote pour les systèmes de chauffage, en convertissant automatiquement plusieurs entités (`select` et `power`) en une seule entité `climate`. Une entité `sensor` de température peut également être ajoutée en option. Cette intégration est idéale pour contrôler et surveiller les modules fil pilote de chauffage.
+Cette intégration pour Home Assistant simplifie l'installation de modules fil pilote pour les systèmes de chauffage, en convertissant automatiquement plusieurs entités (`select` et `power`) en une seule entité `climate`. Des entités `sensor` de température et d'humidité peuvent également être ajoutées en option. Cette intégration est idéale pour contrôler et surveiller les modules fil pilote de chauffage.
 
 ### Caractéristiques principales
 - Convertit les entités `select` et `power` en une seule entité `climate`.
@@ -12,7 +12,7 @@ Cette intégration pour Home Assistant simplifie l'installation de modules fil p
 - Utilise l'entité `power` pour détecter si le chauffage est actif.
 - Mode par défaut à l'allumage configurable.
 - Seuil de puissance configurable pour déterminer l'état de chauffe.
-- Prise en charge optionnelle pour une entité `sensor` de température.
+- Prise en charge optionnelle d'entités `sensor` de température et d'humidité.
 
 ### Compatibilité
 L'intégration est compatible avec les appareils suivants ou tout thermostat contrôlable avec une entité de type select:

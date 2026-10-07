@@ -4,7 +4,7 @@
 [![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/Diaoul/ha-pilot-wire-climate/blob/master/README-fr.md)
 
 ## Overview
-This Home Assistant integration simplifies the setup of pilot wire modules for heating systems, providing seamless conversion of multiple entities (`select` and `power`) into a unified `climate` entity. An optional temperature `sensor` entity can also be added. This integration is ideal for controlling pilot wire heating modules, enabling streamlined control and monitoring of heating states.
+This Home Assistant integration simplifies the setup of pilot wire modules for heating systems, providing seamless conversion of multiple entities (`select` and `power`) into a unified `climate` entity. Optional temperature and humidity `sensor` entities can also be added. This integration is ideal for controlling pilot wire heating modules, enabling streamlined control and monitoring of heating states.
 
 ### Key Features
 - Converts `select` and `power` entities into a single `climate` entity.
@@ -12,7 +12,7 @@ This Home Assistant integration simplifies the setup of pilot wire modules for h
 - Uses the `power` entity to detect whether the heating is on or off.
 - Configurable power threshold to determine heating state.
 - Configurable default power on preset.
-- Optional support for temperature `sensor` entities.
+- Optional support for temperature and humidity `sensor` entities.
 
 ### Compatibility
 The integration is compatible with the following devices or any climate manageable with a select entity :
