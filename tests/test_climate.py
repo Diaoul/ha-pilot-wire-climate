@@ -466,6 +466,16 @@ async def test_temperature_unit_from_sensor(hass: HomeAssistant, select_entity):
     )
 
 
+async def test_kelvin_temperature_sensor(hass: HomeAssistant, select_entity):
+    hass.states.async_set(TEMPERATURE, "293.15", {"unit_of_measurement": "K"})
+    entry = helper_entry(temperature_sensor=TEMPERATURE)
+    await setup_helper(hass, entry)
+
+    assert hass.states.get(climate_entity_id(hass, entry)).attributes[
+        "current_temperature"
+    ] == pytest.approx(20)
+
+
 async def test_unknown_mode_has_no_preset(hass: HomeAssistant, select_entity, caplog):
     entry = helper_entry()
     await setup_helper(hass, entry)

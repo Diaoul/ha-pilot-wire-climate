@@ -45,7 +45,7 @@ Le thermostat apparaît sur l'appareil du module, sous son nom.
 | Option | Par défaut | Description |
 | :----- | :--------- | :---------- |
 | Entité de sélection | obligatoire | Le `select` ou `input_select` fil pilote du module |
-| Capteur de température | aucun | Affiché comme température actuelle, dans l'unité du capteur |
+| Capteur de température | aucun | Affiché comme température actuelle, dans l'unité du capteur, ou en °C pour un capteur en kelvins |
 | Capteur d'humidité | aucun | Affiché comme humidité actuelle |
 | Capteur de puissance | aucun | Distingue la chauffe du repos |
 | Modes supplémentaires | activé | Propose Confort -1 °C et Confort -2 °C quand le select les a |

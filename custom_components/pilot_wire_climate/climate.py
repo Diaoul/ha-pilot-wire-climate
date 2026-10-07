@@ -41,7 +41,7 @@ from homeassistant.helpers.restore_state import (
     RestoredExtraData,
     RestoreEntity,
 )
-from homeassistant.util.unit_conversion import PowerConverter
+from homeassistant.util.unit_conversion import PowerConverter, TemperatureConverter
 
 from . import PilotWireConfigEntry
 from .const import (
@@ -377,8 +377,14 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             _LOGGER.error("Unable to update from temperature sensor: %s", raw)
             self._cur_temperature = None
             return
-        self._cur_temperature = value
         unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
+        if unit == UnitOfTemperature.KELVIN:
+            # A climate entity's temperature unit can only be °C or °F.
+            value = TemperatureConverter.convert(
+                value, UnitOfTemperature.KELVIN, UnitOfTemperature.CELSIUS
+            )
+            unit = UnitOfTemperature.CELSIUS
+        self._cur_temperature = value
         if unit in (UnitOfTemperature.CELSIUS, UnitOfTemperature.FAHRENHEIT):
             self._attr_temperature_unit = unit
 

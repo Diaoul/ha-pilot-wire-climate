@@ -45,7 +45,7 @@ The thermostat appears on the module's device, named after it.
 | Option | Default | Description |
 | :----- | :------ | :---------- |
 | Select entity | required | The module's pilot wire `select` or `input_select` |
-| Temperature sensor | none | Shown as the current temperature, in the sensor's unit |
+| Temperature sensor | none | Shown as the current temperature, in the sensor's unit, or in °C for a sensor in kelvin |
 | Humidity sensor | none | Shown as the current humidity |
 | Power sensor | none | Tells heating from idle |
 | Additional modes | on | Offer Comfort -1 °C and Comfort -2 °C when the select has them |
