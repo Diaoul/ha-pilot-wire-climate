@@ -5,6 +5,7 @@
     ":disableRateLimiting",
     ":automergeBranch",
     "helpers:pinGitHubActionDigestsToSemver",
+    ":semanticCommits",
   ],
   "pre-commit": {
     enabled: true,
