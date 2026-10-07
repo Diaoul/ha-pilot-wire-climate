@@ -66,7 +66,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           version=$(jq -r '."."' .release-please-manifest.json)
-          draft=$(gh release view "$version" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null || true)
+          if ! draft=$(gh release view "$version" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2> error); then
+            # Any other failure would leave a release stuck as a draft unnoticed.
+            grep -q "release not found" error || { cat error >&2; exit 1; }
+          fi
           if [ "$draft" != true ]; then
             echo "No draft release for $version"
             exit 0
