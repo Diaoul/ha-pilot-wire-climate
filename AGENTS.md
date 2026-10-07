@@ -48,9 +48,9 @@ are the reference.
 
 The test harness pins one Home Assistant release, and Renovate bumps it,
 sometimes to a beta. A red bump is the early warning that the next Home
-Assistant breaks something: fix it before upgrading Home Assistant. When a fix
-needs a newer Home Assistant, raise `homeassistant` in `hacs.json` so HACS
-refuses older installs.
+Assistant breaks something: fix it before upgrading a live install to that
+release. When a fix needs a newer Home Assistant, raise `homeassistant` in
+`hacs.json` so HACS refuses older installs.
 
 ## Don't invent fallbacks
 
@@ -58,52 +58,34 @@ If the select has no option for the requested preset, raise rather than send
 something close. Likewise, don't add handling for a failure you have only
 imagined; fix what is observed.
 
-## Comments
-
-Comments explain **why**. If a comment restates the line below it, delete it.
-
-```python
-# bad
-# Return early when the mode is unchanged
-if hvac_mode == self.hvac_mode:
-    return
-
-# good
-if hvac_mode == self.hvac_mode:
-    # Otherwise turning on a heating thermostat would reset its preset.
-    return
-```
-
 ## Verify before committing
 
 Run the mise tasks that CI runs (`mise tasks` lists them). Tests use real Home
 Assistant fixtures, not mocks of it. Don't let coverage drop, and when fixing a
 bug, check that the new test fails without the fix.
 
-State clearly what was verified and what was not. A passing suite is not the
-integration working on a real module: check a live install's states and logs
-after a release.
+A passing suite is not the integration working on a real module: check a
+live install's states and logs after a release.
 
 ## Debugging
 
 Read the select's history before reasoning from the code: what it reported,
-when, and what the thermostat showed then. Enable debug logging for
-`custom_components.pilot_wire_climate`.
+when, and what the thermostat showed then.
 
 ## Docs must match the code
 
-When behaviour changes, update both READMEs (English and French) and both
-translations in the same commit.
+When behaviour changes, update every README and every translation in the same
+commit.
 
 ## Versioning and releases
 
 Semantic versioning. Anything that needs users to change their setup or
 automations is a major bump, whatever its size.
 
-Releases are cut from the commit messages by release-please. Never bump the
-version by hand. The release notes are built from the `feat` and `fix`
-summaries and from each `BREAKING CHANGE:` footer, verbatim, so write that
-footer as the remedy users will read.
+Never bump the version by hand; it is derived from the commits. The release
+notes are built from the `feat` and `fix` summaries and from each
+`BREAKING CHANGE:` footer, verbatim, so write that footer as the remedy users
+will read.
 
 ## Commits
 
