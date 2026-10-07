@@ -9,9 +9,9 @@
     "sensor",
     "select"
   ],
-  "documentation": "https://github.com/Diaoul/ha-pilot-wire-climate",
+  "documentation": "https://github.com/Diaoul/hass-pilot-wire-climate",
   "integration_type": "helper",
   "iot_class": "calculated",
-  "issue_tracker": "https://github.com/Diaoul/ha-pilot-wire-climate/issues",
+  "issue_tracker": "https://github.com/Diaoul/hass-pilot-wire-climate/issues",
   "version": "2.2.0"
 }
