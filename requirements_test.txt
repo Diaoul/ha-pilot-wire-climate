@@ -1,4 +1,3 @@
-# ruff and mypy follow Home Assistant core 2026.9.4's pins
 pytest-homeassistant-custom-component==0.13.367
 mypy==2.3.1
 ruff==0.16.7

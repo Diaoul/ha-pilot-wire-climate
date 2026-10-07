@@ -1,0 +1,26 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "pre-commit": {
+    enabled: true,
+  },
+  // Renovate merges itself once checks pass; GitHub's auto-merge needs branch
+  // protection with required checks, which this repository does not have.
+  platformAutomerge: false,
+  packageRules: [
+    {
+      description: "Each bump runs the tests against a new Home Assistant release: merge it before upgrading Home Assistant",
+      matchPackageNames: ["pytest-homeassistant-custom-component"],
+      automerge: false,
+    },
+    {
+      groupName: "linters",
+      matchPackageNames: ["ruff", "mypy", "astral-sh/ruff-pre-commit"],
+      automerge: true,
+    },
+    {
+      matchManagers: ["github-actions"],
+      automerge: true,
+    },
+  ],
+}
