@@ -50,6 +50,11 @@
       }
     }
   },
+  "exceptions": {
+    "missing_option": {
+      "message": "{entity_id} n'a pas d'option pour le mode fil pilote {value}"
+    }
+  },
   "selector": {
     "default_preset": {
       "options": {

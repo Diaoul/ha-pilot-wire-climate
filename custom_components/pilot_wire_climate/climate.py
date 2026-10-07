@@ -51,6 +51,7 @@ from .const import (
     CONF_SELECT,
     CONF_TEMPERATURE_SENSOR,
     DEFAULT_DEFAULT_PRESET,
+    DOMAIN,
     PRESET_COMFORT_1,
     PRESET_COMFORT_2,
     PRESET_TO_VALUE,
@@ -218,7 +219,14 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         for option in self._options():
             if get_value_key(option) == value:
                 return option
-        raise HomeAssistantError(f"{self.preset_entity_id} has no option for {value}")
+        raise HomeAssistantError(
+            translation_domain=DOMAIN,
+            translation_key="missing_option",
+            translation_placeholders={
+                "entity_id": self.preset_entity_id,
+                "value": value,
+            },
+        )
 
     @override
     @property
