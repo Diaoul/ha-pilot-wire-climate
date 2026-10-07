@@ -215,15 +215,16 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         state = self.hass.states.get(self._select)
         return state.attributes.get(ATTR_OPTIONS, []) if state else []
 
-    def _get_option(self, names: tuple[str, ...]) -> str:
-        """Return the select option going by one of these names."""
+    def _get_option(self, mode: str) -> str:
+        """Return the select option for off or for a preset."""
+        names = OFF_OPTIONS if mode == HVACMode.OFF else PRESET_OPTIONS[mode]
         for option in self._options():
             if option in names:
                 return option
         raise HomeAssistantError(
             translation_domain=DOMAIN,
             translation_key="missing_option",
-            translation_placeholders={"entity_id": self._select, "value": names[0]},
+            translation_placeholders={"entity_id": self._select, "mode": mode},
         )
 
     @override
@@ -288,7 +289,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         if preset_mode == self.preset_mode:
             # Every select_option is a radio command to the module.
             return
-        await self._async_select_option(self._get_option(PRESET_OPTIONS[preset_mode]))
+        await self._async_select_option(self._get_option(preset_mode))
 
     @override
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
@@ -297,12 +298,12 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             # Otherwise turning on a heating thermostat would reset its preset.
             return
         if hvac_mode == HVACMode.OFF:
-            names = OFF_OPTIONS
+            mode: str = HVACMode.OFF
         elif self._last_preset in self.preset_modes:
-            names = PRESET_OPTIONS[self._last_preset]
+            mode = self._last_preset
         else:
-            names = PRESET_OPTIONS[self._default_preset]
-        await self._async_select_option(self._get_option(names))
+            mode = self._default_preset
+        await self._async_select_option(self._get_option(mode))
 
     async def _async_select_option(self, option: str) -> None:
         await self.hass.services.async_call(

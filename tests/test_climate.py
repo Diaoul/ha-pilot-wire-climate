@@ -131,7 +131,7 @@ async def test_missing_option_error(hass: HomeAssistant, select_entity):
         )
 
     assert error.value.translation_key == "missing_option"
-    assert str(error.value) == f"{SELECT} has no option for the off pilot wire mode"
+    assert str(error.value) == f"{SELECT} has no option for the off mode"
 
 
 async def test_set_current_preset_sends_nothing(hass: HomeAssistant, select_entity):
@@ -177,6 +177,19 @@ async def test_select_error_reaches_caller(hass: HomeAssistant, select_entity):
         await call(
             hass, "set_preset_mode", climate_entity_id(hass, entry), preset_mode="eco"
         )
+
+
+async def test_missing_option_names_the_preset(hass: HomeAssistant, select_entity):
+    hass.states.async_set(SELECT, "off", {"options": FOUR_OPTIONS})
+    entry = helper_entry(default_preset="comfort_1")
+    await setup_helper(hass, entry)
+
+    with pytest.raises(HomeAssistantError) as error:
+        await call(
+            hass, "set_hvac_mode", climate_entity_id(hass, entry), hvac_mode="heat"
+        )
+
+    assert str(error.value) == f"{SELECT} has no option for the comfort_1 mode"
 
 
 async def test_options_are_read_when_used(hass: HomeAssistant, select_entity):

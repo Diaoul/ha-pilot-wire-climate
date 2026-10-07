@@ -64,7 +64,7 @@
   },
   "exceptions": {
     "missing_option": {
-      "message": "{entity_id} has no option for the {value} pilot wire mode"
+      "message": "{entity_id} has no option for the {mode} mode"
     }
   },
   "selector": {
