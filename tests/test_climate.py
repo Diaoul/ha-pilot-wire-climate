@@ -1,3 +1,5 @@
+import logging
+
 from homeassistant.core import Context, HomeAssistant, ServiceCall, State
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 import pytest
@@ -500,3 +502,33 @@ async def test_unknown_mode_has_no_preset(hass: HomeAssistant, select_entity, ca
     assert state.state == "heat"
     assert state.attributes["preset_mode"] is None
     assert "unknown pilot wire mode turbo" in caplog.text
+
+
+async def test_invalid_sensor_logged_once_until_it_recovers(
+    hass: HomeAssistant, select_entity, caplog
+):
+    await setup_with_sensors(hass)
+    caplog.set_level(logging.INFO)
+
+    for value in ("abc", "def", "21", "abc"):
+        hass.states.async_set(TEMPERATURE, value)
+        await hass.async_block_till_done()
+
+    assert caplog.text.count("Unable to update from temperature sensor") == 2
+    assert caplog.text.count(f"{TEMPERATURE} reports a usable state again") == 1
+
+
+async def test_unknown_mode_logged_once_until_it_recovers(
+    hass: HomeAssistant, select_entity, caplog
+):
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+    caplog.set_level(logging.INFO)
+    options = [*SIX_OPTIONS, "turbo", "boost"]
+
+    for option in ("turbo", "boost", "off", "turbo"):
+        hass.states.async_set(SELECT, option, {"options": options})
+        await hass.async_block_till_done()
+
+    assert caplog.text.count("reports unknown pilot wire mode") == 2
+    assert caplog.text.count(f"{SELECT} reports a usable state again") == 1

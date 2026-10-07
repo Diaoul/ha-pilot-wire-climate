@@ -73,20 +73,6 @@ async def async_setup_entry(
     async_add_entities([PilotWireClimate(hass, config_entry)])
 
 
-def _read_float(state: State | None, sensor: str) -> float | None:
-    """Return the sensor's reading, or None while it has none."""
-    if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
-        return None
-    try:
-        value = float(state.state)
-    except ValueError:
-        value = math.nan
-    if not math.isfinite(value):
-        _LOGGER.error("Unable to update from %s sensor: %s", sensor, state.state)
-        return None
-    return value
-
-
 class PilotWireClimate(ClimateEntity, RestoreEntity):
     """Representation of a Pilot Wire device."""
 
@@ -116,6 +102,8 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         self._mode: str | None = None
         self._power: float | None = None
         self._last_preset: str | None = None
+        # Logged once until they recover, not on every state change
+        self._unusable: set[str] = set()
 
         self._attr_unique_id = config_entry.entry_id
         self.device_entry = async_entity_id_to_device(hass, self._select)
@@ -163,7 +151,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         if entity_id == self._temperature_sensor:
             self._async_read_temperature(state)
         if entity_id == self._humidity_sensor:
-            self._attr_current_humidity = _read_float(state, "humidity")
+            self._attr_current_humidity = self._read_float(state, "humidity")
         if entity_id == self._power_sensor:
             self._async_read_power(state)
 
@@ -173,20 +161,23 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             self._mode = None
             return
         self._mode = state.state
-        if self._mode in OFF_OPTIONS:
+        preset = option_preset(self._mode)
+        if preset is None and self._mode not in OFF_OPTIONS:
+            if self._select not in self._unusable:
+                self._unusable.add(self._select)
+                _LOGGER.warning(
+                    "%s reports unknown pilot wire mode %s, shown with no preset",
+                    self._select,
+                    self._mode,
+                )
             return
-        if (preset := option_preset(self._mode)) is None:
-            _LOGGER.warning(
-                "%s reports unknown pilot wire mode %s, shown with no preset",
-                self._select,
-                self._mode,
-            )
-        else:
+        self._usable_again(self._select)
+        if preset is not None:
             self._last_preset = preset
 
     @callback
     def _async_read_temperature(self, state: State | None) -> None:
-        self._attr_current_temperature = _read_float(state, "temperature")
+        self._attr_current_temperature = self._read_float(state, "temperature")
         if state is None or self._attr_current_temperature is None:
             return
         unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
@@ -203,13 +194,36 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
 
     @callback
     def _async_read_power(self, state: State | None) -> None:
-        self._power = _read_float(state, "power")
+        self._power = self._read_float(state, "power")
         if state is None or self._power is None:
             return
         # The threshold is set in watts.
         unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
         if unit in PowerConverter.VALID_UNITS:
             self._power = PowerConverter.convert(self._power, unit, UnitOfPower.WATT)
+
+    def _read_float(self, state: State | None, sensor: str) -> float | None:
+        """Return the sensor's reading, or None while it has none."""
+        if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            return None
+        try:
+            value = float(state.state)
+        except ValueError:
+            value = math.nan
+        if not math.isfinite(value):
+            if state.entity_id not in self._unusable:
+                self._unusable.add(state.entity_id)
+                _LOGGER.error(
+                    "Unable to update from %s sensor: %s", sensor, state.state
+                )
+            return None
+        self._usable_again(state.entity_id)
+        return value
+
+    def _usable_again(self, entity_id: str) -> None:
+        if entity_id in self._unusable:
+            self._unusable.discard(entity_id)
+            _LOGGER.info("%s reports a usable state again", entity_id)
 
     def _options(self) -> list[str]:
         state = self.hass.states.get(self._select)
