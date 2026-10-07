@@ -2,7 +2,7 @@
 
 import logging
 import math
-from typing import Any, override
+from typing import override
 
 from homeassistant.components.climate import (
     ClimateEntity,
@@ -10,18 +10,20 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.components.select import ATTR_OPTIONS, SERVICE_SELECT_OPTION
+from homeassistant.components.select import (
+    ATTR_OPTION,
+    ATTR_OPTIONS,
+    SERVICE_SELECT_OPTION,
+)
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_UNIT_OF_MEASUREMENT,
-    EVENT_HOMEASSISTANT_START,
     STATE_UNAVAILABLE,
     STATE_UNKNOWN,
     UnitOfPower,
     UnitOfTemperature,
 )
 from homeassistant.core import (
-    CoreState,
     Event,
     EventStateChangedData,
     HomeAssistant,
@@ -69,38 +71,21 @@ async def async_setup_entry(
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Initialize config entry."""
-    options = config_entry.options
-    async_add_entities(
-        [
-            PilotWireClimate(
-                hass,
-                config_entry.title,
-                options[CONF_SELECT],
-                options.get(CONF_TEMPERATURE_SENSOR),
-                options.get(CONF_HUMIDITY_SENSOR),
-                options.get(CONF_POWER_SENSOR),
-                options.get(CONF_ADDITIONAL_MODES, True),
-                options.get(CONF_POWER_THRESHOLD, 0),
-                options.get(CONF_DEFAULT_PRESET, DEFAULT_DEFAULT_PRESET),
-                config_entry.entry_id,
-            )
-        ]
-    )
+    async_add_entities([PilotWireClimate(hass, config_entry)])
 
 
-def _finite_float(value: str) -> float | None:
+def _read_float(state: State | None, sensor: str) -> float | None:
+    """Return the sensor's reading, or None while it has none."""
+    if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+        return None
     try:
-        number = float(value)
+        value = float(state.state)
     except ValueError:
+        value = math.nan
+    if not math.isfinite(value):
+        _LOGGER.error("Unable to update from %s sensor: %s", sensor, state.state)
         return None
-    return number if math.isfinite(number) else None
-
-
-def _value(state: State) -> str | None:
-    """Return the state, or None while the entity is unavailable or unknown."""
-    if state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
-        return None
-    return state.state
+    return value
 
 
 class PilotWireClimate(ClimateEntity, RestoreEntity):
@@ -117,43 +102,30 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_translation_key: str = "pilot_wire"
 
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        name: str,
-        preset_entity_id: str,
-        temp_entity_id: str | None,
-        humidity_entity_id: str | None,
-        power_entity_id: str | None,
-        additional_modes: bool,
-        power_threshold: float,
-        default_preset: str,
-        unique_id: str,
-    ) -> None:
+    def __init__(self, hass: HomeAssistant, config_entry: PilotWireConfigEntry) -> None:
         """Initialize the climate device."""
-
-        self.device_entry = async_entity_id_to_device(hass, preset_entity_id)
-        # On a device, the thermostat is the device's main feature.
-        self._attr_name = None if self.device_entry else name
-
-        self.preset_entity_id = preset_entity_id
-        self.temp_entity_id = temp_entity_id
-        self.humidity_entity_id = humidity_entity_id
-        self.power_entity_id = power_entity_id
-        self.additional_modes = additional_modes
-        self._power_threshold = power_threshold
-        self._cur_temperature: float | None = None
-        self._cur_humidity: float | None = None
-        self._cur_power: float | None = None
-        self._cur_mode: str | None = None
-        self._default_preset = default_preset
+        options = config_entry.options
+        self._select: str = options[CONF_SELECT]
+        self._temperature_sensor: str | None = options.get(CONF_TEMPERATURE_SENSOR)
+        self._humidity_sensor: str | None = options.get(CONF_HUMIDITY_SENSOR)
+        self._power_sensor: str | None = options.get(CONF_POWER_SENSOR)
+        self._additional_modes: bool = options.get(CONF_ADDITIONAL_MODES, True)
+        self._power_threshold: float = options.get(CONF_POWER_THRESHOLD, 0)
+        self._default_preset: str = options.get(
+            CONF_DEFAULT_PRESET, DEFAULT_DEFAULT_PRESET
+        )
+        self._mode: str | None = None
+        self._power: float | None = None
         self._last_preset: str | None = None
 
-        self._attr_unique_id = unique_id
+        self._attr_unique_id = config_entry.entry_id
+        self.device_entry = async_entity_id_to_device(hass, self._select)
+        # On a device, the thermostat is the device's main feature.
+        self._attr_name = None if self.device_entry else config_entry.title
 
     @override
     async def async_added_to_hass(self) -> None:
-        """Run when entity about to be added."""
+        """Restore the last preset and follow the select and sensors."""
         await super().async_added_to_hass()
 
         if (data := await self.async_get_last_extra_data()) is not None:
@@ -161,55 +133,87 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             if last_preset in PRESET_OPTIONS:
                 self._last_preset = last_preset
 
-        # Add listener
-        if self.temp_entity_id is not None:
-            self.async_on_remove(
-                async_track_state_change_event(
-                    self.hass, [self.temp_entity_id], self._async_temp_changed
-                )
+        sources = [
+            entity_id
+            for entity_id in (
+                self._select,
+                self._temperature_sensor,
+                self._humidity_sensor,
+                self._power_sensor,
             )
-
-        if self.humidity_entity_id is not None:
-            self.async_on_remove(
-                async_track_state_change_event(
-                    self.hass, [self.humidity_entity_id], self._async_humidity_changed
-                )
-            )
-
-        if self.power_entity_id is not None:
-            self.async_on_remove(
-                async_track_state_change_event(
-                    self.hass, [self.power_entity_id], self._async_power_changed
-                )
-            )
-
+            if entity_id is not None
+        ]
         self.async_on_remove(
             async_track_state_change_event(
-                self.hass, [self.preset_entity_id], self._async_mode_changed
+                self.hass, sources, self._async_source_changed
             )
         )
+        # A source that is not loaded yet is read from its first state change.
+        for entity_id in sources:
+            self._async_read(entity_id, self.hass.states.get(entity_id))
 
-        @callback
-        def _async_startup(_: Event | None = None) -> None:
-            """Init on startup."""
-            self._async_update_mode(self.hass.states.get(self.preset_entity_id))
-            if self.temp_entity_id is not None:
-                self._async_update_temp(self.hass.states.get(self.temp_entity_id))
-            if self.humidity_entity_id is not None:
-                self._async_update_humidity(
-                    self.hass.states.get(self.humidity_entity_id)
-                )
-            if self.power_entity_id is not None:
-                self._async_update_power(self.hass.states.get(self.power_entity_id))
-            self.async_write_ha_state()
+    @callback
+    def _async_source_changed(self, event: Event[EventStateChangedData]) -> None:
+        self._async_read(event.data["entity_id"], event.data["new_state"])
+        self.async_write_ha_state()
 
-        if self.hass.state is CoreState.running:
-            _async_startup()
+    @callback
+    def _async_read(self, entity_id: str, state: State | None) -> None:
+        if entity_id == self._select:
+            self._async_read_mode(state)
+        if entity_id == self._temperature_sensor:
+            self._async_read_temperature(state)
+        if entity_id == self._humidity_sensor:
+            self._attr_current_humidity = _read_float(state, "humidity")
+        if entity_id == self._power_sensor:
+            self._async_read_power(state)
+
+    @callback
+    def _async_read_mode(self, state: State | None) -> None:
+        if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            self._mode = None
+            return
+        self._mode = state.state
+        if self._mode in OFF_OPTIONS:
+            return
+        if (preset := option_preset(self._mode)) is None:
+            _LOGGER.warning(
+                "%s reports unknown pilot wire mode %s, shown with no preset",
+                self._select,
+                self._mode,
+            )
         else:
-            self.hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, _async_startup)
+            self._last_preset = preset
+
+    @callback
+    def _async_read_temperature(self, state: State | None) -> None:
+        self._attr_current_temperature = _read_float(state, "temperature")
+        if state is None or self._attr_current_temperature is None:
+            return
+        unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
+        if unit == UnitOfTemperature.KELVIN:
+            # A climate entity's temperature unit can only be °C or °F.
+            self._attr_current_temperature = TemperatureConverter.convert(
+                self._attr_current_temperature,
+                UnitOfTemperature.KELVIN,
+                UnitOfTemperature.CELSIUS,
+            )
+            unit = UnitOfTemperature.CELSIUS
+        if unit in (UnitOfTemperature.CELSIUS, UnitOfTemperature.FAHRENHEIT):
+            self._attr_temperature_unit = unit
+
+    @callback
+    def _async_read_power(self, state: State | None) -> None:
+        self._power = _read_float(state, "power")
+        if state is None or self._power is None:
+            return
+        # The threshold is set in watts.
+        unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
+        if unit in PowerConverter.VALID_UNITS:
+            self._power = PowerConverter.convert(self._power, unit, UnitOfPower.WATT)
 
     def _options(self) -> list[str]:
-        state = self.hass.states.get(self.preset_entity_id)
+        state = self.hass.states.get(self._select)
         return state.attributes.get(ATTR_OPTIONS, []) if state else []
 
     def _get_option(self, names: tuple[str, ...]) -> str:
@@ -220,49 +224,37 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         raise HomeAssistantError(
             translation_domain=DOMAIN,
             translation_key="missing_option",
-            translation_placeholders={
-                "entity_id": self.preset_entity_id,
-                "value": names[0],
-            },
+            translation_placeholders={"entity_id": self._select, "value": names[0]},
         )
 
     @override
     @property
     def available(self) -> bool:
         """Return whether the select driving the heater is available."""
-        state = self.hass.states.get(self.preset_entity_id)
+        state = self.hass.states.get(self._select)
         return state is not None and state.state != STATE_UNAVAILABLE
 
     @override
     @property
     def hvac_action(self) -> HVACAction | None:
         """Return the current running hvac operation."""
-        if self._cur_power is not None and self._cur_power > self.power_threshold:
+        if self._power is not None and self._power > self._power_threshold:
             return HVACAction.HEATING
         if self.hvac_mode == HVACMode.OFF:
             return HVACAction.OFF
-        if self._cur_power is not None:
+        if self._power is not None:
             return HVACAction.IDLE
         return None
 
-    @property
-    def power_threshold(self) -> float:
-        """Return the power above which the heater counts as heating."""
-        return self._power_threshold
-
     @override
     @property
-    def current_temperature(self) -> float | None:
-        """Return the sensor temperature."""
-        return self._cur_temperature
-
-    @override
-    @property
-    def current_humidity(self) -> float | None:
-        """Return the sensor humidity."""
-        return self._cur_humidity
-
-    # Presets
+    def hvac_mode(self) -> HVACMode | None:
+        """Return hvac operation ie. heat, off mode."""
+        if self._mode is None:
+            return None
+        if self._mode in OFF_OPTIONS:
+            return HVACMode.OFF
+        return HVACMode.HEAT
 
     @override
     @property
@@ -273,7 +265,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             preset
             for preset, names in PRESET_OPTIONS.items()
             if (
-                self.additional_modes
+                self._additional_modes
                 or preset not in (PRESET_COMFORT_1, PRESET_COMFORT_2)
             )
             and any(option in names for option in options)
@@ -283,10 +275,16 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
     @property
     def preset_mode(self) -> str | None:
         """Preset current mode."""
-        if self._cur_mode is None:
+        if self._mode is None:
             return None
-        preset = option_preset(self._cur_mode)
+        preset = option_preset(self._mode)
         return preset if preset in self.preset_modes else None
+
+    @override
+    @property
+    def extra_restore_state_data(self) -> ExtraStoredData:
+        """Keep the preset to turn back on with across restarts."""
+        return RestoredExtraData({"last_preset": self._last_preset})
 
     @override
     async def async_set_preset_mode(self, preset_mode: str) -> None:
@@ -294,9 +292,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         if preset_mode == self.preset_mode:
             # Every select_option is a radio command to the module.
             return
-        await self._async_set_mode_value(self._get_option(PRESET_OPTIONS[preset_mode]))
-
-    # Modes
+        await self._async_select_option(self._get_option(PRESET_OPTIONS[preset_mode]))
 
     @override
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
@@ -310,119 +306,13 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             names = PRESET_OPTIONS[self._last_preset]
         else:
             names = PRESET_OPTIONS[self._default_preset]
-        await self._async_set_mode_value(self._get_option(names))
+        await self._async_select_option(self._get_option(names))
 
-    @override
-    @property
-    def extra_restore_state_data(self) -> ExtraStoredData:
-        """Keep the preset to turn back on with across restarts."""
-        return RestoredExtraData({"last_preset": self._last_preset})
-
-    @override
-    @property
-    def hvac_mode(self) -> HVACMode | None:
-        """Return hvac operation ie. heat, off mode."""
-        if self._cur_mode is None:
-            return None
-        if self._cur_mode in OFF_OPTIONS:
-            return HVACMode.OFF
-        return HVACMode.HEAT
-
-    @callback
-    def _async_temp_changed(self, event: Event[EventStateChangedData]) -> None:
-        """Handle temperature changes."""
-        self._async_update_temp(event.data["new_state"])
-        self.async_write_ha_state()
-
-    @callback
-    def _async_humidity_changed(self, event: Event[EventStateChangedData]) -> None:
-        """Handle humidity changes."""
-        self._async_update_humidity(event.data["new_state"])
-        self.async_write_ha_state()
-
-    @callback
-    def _async_power_changed(self, event: Event[EventStateChangedData]) -> None:
-        """Handle power changes."""
-        self._async_update_power(event.data["new_state"])
-        self.async_write_ha_state()
-
-    @callback
-    def _async_mode_changed(self, event: Event[EventStateChangedData]) -> None:
-        """Handle preset switch state changes."""
-        self._async_update_mode(event.data["new_state"])
-        self.async_write_ha_state()
-
-    @callback
-    def _async_update_mode(self, state: State | None) -> None:
-        self._cur_mode = None if state is None else _value(state)
-        if self._cur_mode is None:
-            return
-        if self._cur_mode in OFF_OPTIONS:
-            return
-        if (preset := option_preset(self._cur_mode)) is None:
-            _LOGGER.warning(
-                "%s reports unknown pilot wire mode %s, shown with no preset",
-                self.preset_entity_id,
-                self._cur_mode,
-            )
-        else:
-            self._last_preset = preset
-
-    @callback
-    def _async_update_temp(self, state: State | None) -> None:
-        if state is None or (raw := _value(state)) is None:
-            self._cur_temperature = None
-            return
-        if (value := _finite_float(raw)) is None:
-            _LOGGER.error("Unable to update from temperature sensor: %s", raw)
-            self._cur_temperature = None
-            return
-        unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
-        if unit == UnitOfTemperature.KELVIN:
-            # A climate entity's temperature unit can only be °C or °F.
-            value = TemperatureConverter.convert(
-                value, UnitOfTemperature.KELVIN, UnitOfTemperature.CELSIUS
-            )
-            unit = UnitOfTemperature.CELSIUS
-        self._cur_temperature = value
-        if unit in (UnitOfTemperature.CELSIUS, UnitOfTemperature.FAHRENHEIT):
-            self._attr_temperature_unit = unit
-
-    @callback
-    def _async_update_humidity(self, state: State | None) -> None:
-        if state is None or (raw := _value(state)) is None:
-            self._cur_humidity = None
-            return
-        if (value := _finite_float(raw)) is None:
-            _LOGGER.error("Unable to update from humidity sensor: %s", raw)
-            self._cur_humidity = None
-            return
-        self._cur_humidity = value
-
-    @callback
-    def _async_update_power(self, state: State | None) -> None:
-        if state is None or (raw := _value(state)) is None:
-            self._cur_power = None
-            return
-        if (value := _finite_float(raw)) is None:
-            _LOGGER.error("Unable to update from power sensor: %s", raw)
-            self._cur_power = None
-            return
-        # The threshold is set in watts.
-        unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
-        if unit in PowerConverter.VALID_UNITS:
-            value = PowerConverter.convert(value, unit, UnitOfPower.WATT)
-        self._cur_power = value
-
-    async def _async_set_mode_value(self, value: str) -> None:
-        data: dict[str, Any] = {
-            ATTR_ENTITY_ID: self.preset_entity_id,
-            "option": value,
-        }
+    async def _async_select_option(self, option: str) -> None:
         await self.hass.services.async_call(
-            split_entity_id(self.preset_entity_id)[0],
+            split_entity_id(self._select)[0],
             SERVICE_SELECT_OPTION,
-            data,
+            {ATTR_ENTITY_ID: self._select, ATTR_OPTION: option},
             blocking=True,
             context=self._context,
         )

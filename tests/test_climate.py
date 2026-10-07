@@ -1,5 +1,4 @@
-from homeassistant.const import EVENT_HOMEASSISTANT_START
-from homeassistant.core import Context, CoreState, HomeAssistant, ServiceCall, State
+from homeassistant.core import Context, HomeAssistant, ServiceCall, State
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 import pytest
 from pytest_homeassistant_custom_component.common import (
@@ -411,16 +410,17 @@ async def test_invalid_sensor_value_clears_reading(
         assert f"Unable to update from {sensor} sensor" in caplog.text
 
 
-async def test_reads_sources_once_home_assistant_started(
-    hass: HomeAssistant, select_entity
-):
-    hass.set_state(CoreState.not_running)
-    entity_id = await setup_with_sensors(hass, power="1000")
+async def test_reads_sources_loaded_after_it(hass: HomeAssistant, select_entity):
+    hass.states.async_remove(SELECT)
+    entry = helper_entry(temperature_sensor=TEMPERATURE, power_sensor=POWER)
+    await setup_helper(hass, entry)
+    entity_id = climate_entity_id(hass, entry)
     state = hass.states.get(entity_id)
-    assert state.state == "unknown"
-    assert state.attributes["current_temperature"] is None
+    assert state.state == "unavailable"
 
-    hass.bus.async_fire(EVENT_HOMEASSISTANT_START)
+    hass.states.async_set(SELECT, "comfort", {"options": SIX_OPTIONS})
+    hass.states.async_set(TEMPERATURE, "20.5")
+    hass.states.async_set(POWER, "1000")
     await hass.async_block_till_done()
 
     state = hass.states.get(entity_id)
