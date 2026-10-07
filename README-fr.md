@@ -50,7 +50,7 @@ Le thermostat apparaît sur l'appareil du module, sous son nom.
 | Capteur de puissance | aucun | Distingue la chauffe du repos |
 | Modes supplémentaires | activé | Propose Confort -1 °C et Confort -2 °C quand le select les a |
 | Seuil de puissance | 0 W | Puissance au-delà de laquelle le radiateur est considéré en chauffe, en watts quelle que soit l'unité du capteur |
-| Mode par défaut | Confort | Mode utilisé pour allumer un thermostat qui n'a pas de mode précédent ; doit exister dans le select et être proposé par le thermostat, et un thermostat enregistré avant cette vérification dont le mode par défaut n'est pas proposé est signalé dans **Paramètres** → **Réparations** |
+| Mode par défaut | Confort | Mode utilisé pour allumer un thermostat qui n'a pas de mode précédent ; doit exister dans le select et être proposé par le thermostat |
 
 ## 🧠 Fonctionnement
 
@@ -66,9 +66,11 @@ Le thermostat est une vue du select : la seule chose qu'il conserve lui-même es
 | `off`, `Off` | Arrêt |
 
 - **Choisir un mode** sélectionne l'option correspondante, ce qui rallume aussi un thermostat arrêté ; choisir le mode en cours n'envoie rien
-- **Allumer** revient au dernier mode, ou au mode par défaut s'il n'y en a pas ; allumer un thermostat déjà en chauffe n'envoie rien
-- **L'état de chauffe** vaut `heating` au-dessus du seuil de puissance, même thermostat arrêté, ce qui révèle un module qui ignore l'arrêt. Sinon il vaut `off` quand le thermostat est arrêté, avec ou sans capteur de puissance, et `idle` sous le seuil
-- **Une option inconnue**, ou celle d'un mode non proposé, s'affiche en chauffe sans mode ; une option inconnue est aussi signalée par un avertissement dans les journaux
+- **Allumer** revient au dernier mode, ou au mode par défaut s'il n'y en a pas ; allumer un thermostat déjà allumé n'envoie rien
+- **L'état de chauffe** vaut `heating` au-dessus du seuil de puissance, même thermostat arrêté, ce qui révèle un module qui ignore l'arrêt. Sinon il vaut `off` quand le thermostat est arrêté, avec ou sans capteur de puissance, et `idle` sous le seuil. Sans capteur de puissance, un thermostat allumé n'a pas d'état de chauffe
+- **Une option inconnue**, ou celle d'un mode non proposé, s'affiche en chauffe sans mode
+- **Une commande en échec** fait échouer l'action qui l'a envoyée, que le select n'ait pas d'option pour le mode ou que son intégration signale une erreur, pour que l'automatisation le voie
+- **Un mode par défaut non proposé**, enregistré avant que les options ne le refusent, est signalé dans **Paramètres** → **Réparations**
 
 ## 🔌 Compatibilité
 
@@ -81,14 +83,15 @@ Tout module qui expose son mode fil pilote sous forme de select avec les options
 ## ⚙️ Détails techniques
 
 - **Pas d'interrogation :** le thermostat réagit uniquement aux changements d'état de son select et de ses capteurs
-- **Démarrage :** les sources sont lues une fois Home Assistant démarré
-- **Reprise après redémarrage :** le dernier mode est conservé, donc rallumer après un redémarrage y revient
+- **Démarrage :** les sources sont lues dès l'ajout du thermostat, et celle qui n'est pas encore chargée à son premier état ; tant que son select n'est pas chargé, le thermostat est indisponible
+- **Journaux :** une option inconnue du select est signalée par un avertissement, et une mesure qui n'est pas un nombre par une erreur, chacune une seule fois jusqu'à ce que sa source redonne un état utilisable
 - **Suppression :** supprimer l'entrée réaffiche le select, sauf si vous l'aviez masqué vous-même
 
 ## 🤝 Support
 
 En cas de problème :
-- Activez les journaux de débogage pour `custom_components.pilot_wire_climate` et consultez-les
+- Cherchez `pilot_wire_climate` dans les journaux (**Paramètres** → **Système** → **Journaux**)
+- Consultez l'**Historique** du select pour voir ce qu'il a indiqué, et quand
 - Vérifiez les options du select dans **Outils de développement** → **États**
 - Ouvrez un ticket sur [GitHub](https://github.com/Diaoul/hass-pilot-wire-climate/issues)
 

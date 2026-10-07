@@ -50,7 +50,7 @@ The thermostat appears on the module's device, named after it.
 | Power sensor | none | Tells heating from idle |
 | Additional modes | on | Offer Comfort -1 °C and Comfort -2 °C when the select has them |
 | Power threshold | 0 W | Power above which the heater counts as heating, in watts whatever the sensor's unit |
-| Default preset | Comfort | Preset used to turn on a thermostat that has no previous preset; must be one the select has and the thermostat offers, and a thermostat saved before this check whose default preset is not offered is reported in **Settings** → **Repairs** |
+| Default preset | Comfort | Preset used to turn on a thermostat that has no previous preset; must be one the select has and the thermostat offers |
 
 ## 🧠 How It Works
 
@@ -66,9 +66,11 @@ The thermostat is a view over the select: the only thing it keeps of its own is 
 | `off`, `Off` | Off |
 
 - **Setting a preset** selects the matching option, which also turns an off thermostat on; setting the current preset sends nothing
-- **Turning on** restores the last preset, or the default preset when there is none; turning on a thermostat that is already heating sends nothing
-- **Heating status** is `heating` above the power threshold, even when the thermostat is off, which shows a module ignoring off. Otherwise it is `off` while the thermostat is off, with or without a power sensor, and `idle` below the threshold
-- **An unknown option**, or one for a preset that is not offered, shows heat with no preset; an unknown one is also logged as a warning
+- **Turning on** restores the last preset, or the default preset when there is none; turning on a thermostat that is already on sends nothing
+- **Heating status** is `heating` above the power threshold, even when the thermostat is off, which shows a module ignoring off. Otherwise it is `off` while the thermostat is off, with or without a power sensor, and `idle` below the threshold. With no power sensor, a thermostat that is on has no heating status
+- **An unknown option**, or one for a preset that is not offered, shows heat with no preset
+- **A failed command** fails the action that sent it, whether the select has no option for the preset or its integration reports an error, so an automation sees it
+- **A default preset that is not offered**, saved before the options refused it, is reported in **Settings** → **Repairs**
 
 ## 🔌 Compatibility
 
@@ -81,14 +83,15 @@ Any module exposing its pilot wire mode as a select with the options above, incl
 ## ⚙️ Technical Details
 
 - **No Polling:** The thermostat only reacts to state changes of its select and sensors
-- **Startup:** Sources are read once Home Assistant has started
-- **Restart Recovery:** The last preset is stored, so turning on after a restart goes back to it
+- **Startup:** Sources are read as soon as the thermostat is added, and one that has not loaded yet from its first state; until its select loads, the thermostat is unavailable
+- **Logging:** An unknown select option is logged as a warning, and a sensor reading that is not a number as an error, each once until its source reports a usable state again
 - **Removal:** Deleting the helper unhides the select, unless you hid it yourself
 
 ## 🤝 Support
 
 If you encounter issues:
-- Enable debug logging for `custom_components.pilot_wire_climate` and check the logs
+- Search the logs (**Settings** → **System** → **Logs**) for `pilot_wire_climate`
+- Check the select's **History** to see what it reported, and when
 - Check the select's options in **Developer Tools** → **States**
 - Open an issue on [GitHub](https://github.com/Diaoul/hass-pilot-wire-climate/issues)
 
