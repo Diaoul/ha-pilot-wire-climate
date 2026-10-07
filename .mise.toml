@@ -10,8 +10,8 @@ description = "Install the test and lint dependencies"
 run = "uv pip install -r requirements_test.txt"
 
 [tasks.test]
-description = "Run the tests"
-run = "pytest"
+description = "Run the tests and check coverage"
+run = "pytest --cov=custom_components --cov-report=term-missing"
 
 [tasks.lint]
 description = "Check formatting, lint and types"
