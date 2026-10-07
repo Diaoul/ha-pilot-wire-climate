@@ -114,13 +114,40 @@ Semantic versioning. Anything that needs users to change their setup or
 automations is a major bump, whatever its size.
 
 The release is the `version` in `manifest.json`. Bump it in its own commit
-(`Release X.Y.Z`) and push: once CI passes on `main`, the release workflow
+(`chore(release): X.Y.Z`) and push: once CI passes on `main`, the release workflow
 creates the GitHub release with the zip attached. Then edit the generated notes,
 which are empty for direct commits; put breaking changes under a `### Breaking`
 heading first, with the remedy.
 
 ## Commits
 
-Commit messages explain the reasoning, not the diff: what was wrong, why the
-chosen fix, and what tradeoff it accepts. One concern per commit. Commits are
+[Conventional Commits](https://www.conventionalcommits.org/), since 2.3.0;
+earlier history is plain prose.
+
+```
+<type>(<optional scope>)<optional !>: <summary in the imperative, lower case>
+
+<body: the reasoning>
+
+<optional footers, e.g. BREAKING CHANGE: what users must do>
+```
+
+| Type | For |
+| :--- | :-- |
+| `feat` | a new user-visible capability (an option, a behaviour) |
+| `fix` | a bug fix |
+| `refactor` | a change that alters no behaviour |
+| `test` | tests only |
+| `docs` | README, AGENTS.md, translations that only reword |
+| `ci` | workflows |
+| `build` | dependencies and tooling (`requirements_test.txt`, `.mise.toml`) |
+| `chore` | anything else, including `chore(release): X.Y.Z` |
+
+Scopes are optional; use the module when it helps (`climate`, `config-flow`,
+`migration`). A change that needs users to act is marked with `!` and a
+`BREAKING CHANGE:` footer saying what to do, and makes the next release a major
+one. Renovate's commits follow the same format.
+
+The body explains the reasoning, not the diff: what was wrong, why the chosen
+fix, and what tradeoff it accepts. One concern per commit. Commits are
 gpg-signed; if signing times out, retry rather than disabling it.
