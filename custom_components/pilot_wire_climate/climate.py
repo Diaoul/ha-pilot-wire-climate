@@ -5,9 +5,6 @@ import math
 from typing import Any, override
 
 from homeassistant.components.climate import (
-    PRESET_AWAY,
-    PRESET_COMFORT,
-    PRESET_ECO,
     ClimateEntity,
     ClimateEntityFeature,
     HVACAction,
@@ -54,13 +51,12 @@ from .const import (
     CONF_TEMPERATURE_SENSOR,
     DEFAULT_DEFAULT_PRESET,
     DOMAIN,
+    OFF_OPTIONS,
     PRESET_COMFORT_1,
     PRESET_COMFORT_2,
-    PRESET_TO_VALUE,
-    VALUE_OFF,
-    VALUE_TO_PRESET,
+    PRESET_OPTIONS,
 )
-from .util import get_value_key
+from .util import option_preset
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -162,7 +158,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
 
         if (data := await self.async_get_last_extra_data()) is not None:
             last_preset = data.as_dict().get("last_preset")
-            if last_preset in PRESET_TO_VALUE:
+            if last_preset in PRESET_OPTIONS:
                 self._last_preset = last_preset
 
         # Add listener
@@ -216,17 +212,17 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         state = self.hass.states.get(self.preset_entity_id)
         return state.attributes.get(ATTR_OPTIONS, []) if state else []
 
-    def _get_option(self, value: str) -> str:
-        """Return the select option standing for a pilot wire value."""
+    def _get_option(self, names: tuple[str, ...]) -> str:
+        """Return the select option going by one of these names."""
         for option in self._options():
-            if get_value_key(option) == value:
+            if option in names:
                 return option
         raise HomeAssistantError(
             translation_domain=DOMAIN,
             translation_key="missing_option",
             translation_placeholders={
                 "entity_id": self.preset_entity_id,
-                "value": value,
+                "value": names[0],
             },
         )
 
@@ -272,11 +268,16 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
     @property
     def preset_modes(self) -> list[str]:
         """List the presets that the select has an option for."""
-        presets = [PRESET_COMFORT, PRESET_ECO, PRESET_AWAY]
-        if self.additional_modes:
-            presets[1:1] = [PRESET_COMFORT_1, PRESET_COMFORT_2]
-        values = {get_value_key(option) for option in self._options()}
-        return [preset for preset in presets if PRESET_TO_VALUE[preset] in values]
+        options = self._options()
+        return [
+            preset
+            for preset, names in PRESET_OPTIONS.items()
+            if (
+                self.additional_modes
+                or preset not in (PRESET_COMFORT_1, PRESET_COMFORT_2)
+            )
+            and any(option in names for option in options)
+        ]
 
     @override
     @property
@@ -284,10 +285,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         """Preset current mode."""
         if self._cur_mode is None:
             return None
-        value = get_value_key(self._cur_mode)
-        if value is None or value == VALUE_OFF:
-            return None
-        preset = VALUE_TO_PRESET[value]
+        preset = option_preset(self._cur_mode)
         return preset if preset in self.preset_modes else None
 
     @override
@@ -296,7 +294,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         if preset_mode == self.preset_mode:
             # Every select_option is a radio command to the module.
             return
-        await self._async_set_mode_value(self._get_option(PRESET_TO_VALUE[preset_mode]))
+        await self._async_set_mode_value(self._get_option(PRESET_OPTIONS[preset_mode]))
 
     # Modes
 
@@ -307,12 +305,12 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             # Otherwise turning on a heating thermostat would reset its preset.
             return
         if hvac_mode == HVACMode.OFF:
-            value = VALUE_OFF
+            names = OFF_OPTIONS
         elif self._last_preset in self.preset_modes:
-            value = PRESET_TO_VALUE[self._last_preset]
+            names = PRESET_OPTIONS[self._last_preset]
         else:
-            value = PRESET_TO_VALUE[self._default_preset]
-        await self._async_set_mode_value(self._get_option(value))
+            names = PRESET_OPTIONS[self._default_preset]
+        await self._async_set_mode_value(self._get_option(names))
 
     @override
     @property
@@ -326,7 +324,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         """Return hvac operation ie. heat, off mode."""
         if self._cur_mode is None:
             return None
-        if get_value_key(self._cur_mode) == VALUE_OFF:
+        if self._cur_mode in OFF_OPTIONS:
             return HVACMode.OFF
         return HVACMode.HEAT
 
@@ -359,14 +357,16 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         self._cur_mode = None if state is None else _value(state)
         if self._cur_mode is None:
             return
-        if (value := get_value_key(self._cur_mode)) is None:
+        if self._cur_mode in OFF_OPTIONS:
+            return
+        if (preset := option_preset(self._cur_mode)) is None:
             _LOGGER.warning(
                 "%s reports unknown pilot wire mode %s, shown with no preset",
                 self.preset_entity_id,
                 self._cur_mode,
             )
-        elif value != VALUE_OFF:
-            self._last_preset = VALUE_TO_PRESET[value]
+        else:
+            self._last_preset = preset
 
     @callback
     def _async_update_temp(self, state: State | None) -> None:

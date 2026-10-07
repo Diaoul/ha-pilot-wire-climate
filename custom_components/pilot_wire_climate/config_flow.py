@@ -29,9 +29,14 @@ from .const import (
     DOMAIN,
     PRESET_COMFORT_1,
     PRESET_COMFORT_2,
-    PRESET_TO_VALUE,
+    PRESET_OPTIONS,
 )
-from .util import async_hide_select, config_entry_title, get_value_key
+from .util import (
+    async_hide_select,
+    config_entry_title,
+    is_pilot_wire_option,
+    option_preset,
+)
 
 OPTIONS_SCHEMA: VolDictType = {
     probatio.Required(CONF_SELECT): selector.EntitySelector(
@@ -62,7 +67,7 @@ OPTIONS_SCHEMA: VolDictType = {
         CONF_DEFAULT_PRESET, default=DEFAULT_DEFAULT_PRESET
     ): selector.SelectSelector(
         selector.SelectSelectorConfig(
-            options=list(PRESET_TO_VALUE),
+            options=list(PRESET_OPTIONS),
             mode=selector.SelectSelectorMode.DROPDOWN,
             translation_key=CONF_DEFAULT_PRESET,
         )
@@ -91,8 +96,7 @@ async def validate_options(
 
     state = hass.states.get(select)
     options = state.attributes.get(ATTR_OPTIONS, []) if state else []
-    values = {get_value_key(option) for option in options} - {None}
-    if not values:
+    if not any(is_pilot_wire_option(option) for option in options):
         raise SchemaFlowError("not_pilot_wire")
 
     default_preset = user_input[CONF_DEFAULT_PRESET]
@@ -101,7 +105,7 @@ async def validate_options(
         PRESET_COMFORT_2,
     ):
         raise SchemaFlowError("default_preset_not_offered")
-    if PRESET_TO_VALUE[default_preset] not in values:
+    if not any(option_preset(option) == default_preset for option in options):
         raise SchemaFlowError("default_preset_missing")
     return user_input
 

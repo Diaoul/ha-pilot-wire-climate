@@ -7,15 +7,20 @@ from homeassistant.helpers.schema_config_entry_flow import (
     wrapped_entity_config_entry_title,
 )
 
-from .const import VALUES_MAPPING
+from .const import OFF_OPTIONS, PRESET_OPTIONS
 
 
-def get_value_key(input_value: str) -> str | None:
-    """Return the pilot wire value a select option stands for."""
-    for key, alternatives in VALUES_MAPPING.items():
-        if input_value in alternatives:
-            return key
+def option_preset(option: str) -> str | None:
+    """Return the preset a select option stands for."""
+    for preset, names in PRESET_OPTIONS.items():
+        if option in names:
+            return preset
     return None
+
+
+def is_pilot_wire_option(option: str) -> bool:
+    """Return whether a select option is a pilot wire mode."""
+    return option in OFF_OPTIONS or option_preset(option) is not None
 
 
 def config_entry_title(hass: HomeAssistant, preset_entity_id: str) -> str:

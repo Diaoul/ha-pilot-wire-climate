@@ -2,6 +2,7 @@
 
 import logging
 
+from homeassistant.components.climate import PRESET_AWAY
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import Event, HomeAssistant
@@ -23,8 +24,8 @@ from .const import (
     CONF_SELECT,
     CONF_TEMPERATURE_SENSOR,
     DEFAULT_DEFAULT_PRESET,
-    OLD_OPTION_KEYS,
-    VALUE_TO_PRESET,
+    PRESET_COMFORT_1,
+    PRESET_COMFORT_2,
 )
 from .util import async_hide_select, async_unhide_select, config_entry_title
 
@@ -109,15 +110,21 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
     options = {**config_entry.options}
     if config_entry.minor_version < 6:
-        for old, new in OLD_OPTION_KEYS.items():
+        for old, new in (
+            ("presets", CONF_SELECT),
+            ("temperature", CONF_TEMPERATURE_SENSOR),
+            ("power", CONF_POWER_SENSOR),
+        ):
             if old in options:
                 options[new] = options.pop(old)
     if config_entry.minor_version < 5:
-        # Stored as a preset before minor version 2, then as a select value.
+        # Stored as a preset before minor version 2, then as a pilot wire value.
         default_preset = options.get(CONF_DEFAULT_PRESET, DEFAULT_DEFAULT_PRESET)
-        options[CONF_DEFAULT_PRESET] = VALUE_TO_PRESET.get(
-            default_preset, default_preset
-        )
+        options[CONF_DEFAULT_PRESET] = {
+            "frost_protection": PRESET_AWAY,
+            "comfort-1": PRESET_COMFORT_1,
+            "comfort-2": PRESET_COMFORT_2,
+        }.get(default_preset, default_preset)
 
     if config_entry.minor_version < 3:
         # Earlier versions put the source device's identifiers in the climate
