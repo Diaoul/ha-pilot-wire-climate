@@ -12,6 +12,7 @@ from homeassistant.helpers.schema_config_entry_flow import (
     SchemaConfigFlowHandler,
     SchemaFlowError,
     SchemaFlowFormStep,
+    SchemaOptionsFlowHandler,
 )
 from homeassistant.helpers.typing import VolDictType
 import probatio
@@ -73,16 +74,34 @@ async def validate_options(
     handler: SchemaCommonFlowHandler, user_input: dict[str, Any]
 ) -> dict[str, Any]:
     """Reject options the thermostat could not act on."""
+    hass = handler.parent_handler.hass
+    select = user_input[CONF_SELECT]
+    own_entry_id = (
+        handler.parent_handler.config_entry.entry_id
+        if isinstance(handler.parent_handler, SchemaOptionsFlowHandler)
+        else None
+    )
+    if any(
+        entry.options.get(CONF_SELECT) == select
+        for entry in hass.config_entries.async_entries(DOMAIN)
+        if entry.entry_id != own_entry_id
+    ):
+        # Removing either thermostat would unhide the select the other uses.
+        raise SchemaFlowError("select_in_use")
+
+    state = hass.states.get(select)
+    options = state.attributes.get(ATTR_OPTIONS, []) if state else []
+    values = {get_value_key(option) for option in options} - {None}
+    if not values:
+        raise SchemaFlowError("not_pilot_wire")
+
     default_preset = user_input[CONF_DEFAULT_PRESET]
     if not user_input[CONF_ADDITIONAL_MODES] and default_preset in (
         PRESET_COMFORT_1,
         PRESET_COMFORT_2,
     ):
         raise SchemaFlowError("default_preset_not_offered")
-
-    state = handler.parent_handler.hass.states.get(user_input[CONF_SELECT])
-    options = state.attributes.get(ATTR_OPTIONS, []) if state else []
-    if PRESET_TO_VALUE[default_preset] not in {get_value_key(o) for o in options}:
+    if PRESET_TO_VALUE[default_preset] not in values:
         raise SchemaFlowError("default_preset_missing")
     return user_input
 

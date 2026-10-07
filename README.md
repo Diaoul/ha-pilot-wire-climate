@@ -34,7 +34,7 @@ Click the button above to add this repository to HACS, then download **Pilot Wir
 
 1. Go to **Settings** → **Devices & services** → [**Helpers**](https://my.home-assistant.io/redirect/helpers/)
 2. **Create helper** → **Pilot Wire Thermostat**
-3. **Select the module's pilot wire select** (required) - a `select` or an `input_select`
+3. **Select the module's pilot wire select** (required) - a `select` or an `input_select` with pilot wire options, not used by another thermostat
 4. **(Optional)** Pick a temperature sensor, a humidity sensor and a power sensor
 5. **(Optional)** Set the power threshold, the default preset, and whether to offer the Comfort -1 °C and -2 °C presets
 

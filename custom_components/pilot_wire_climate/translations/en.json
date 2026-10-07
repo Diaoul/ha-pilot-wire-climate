@@ -26,6 +26,8 @@
       }
     },
     "error": {
+      "select_in_use": "Another pilot wire thermostat already uses this select.",
+      "not_pilot_wire": "The select has no pilot wire option, or is not available.",
       "default_preset_not_offered": "The default preset must be one the thermostat offers: turn on the additional modes, or pick another default preset.",
       "default_preset_missing": "The select has no option for the default preset."
     }
@@ -54,6 +56,8 @@
       }
     },
     "error": {
+      "select_in_use": "Another pilot wire thermostat already uses this select.",
+      "not_pilot_wire": "The select has no pilot wire option, or is not available.",
       "default_preset_not_offered": "The default preset must be one the thermostat offers: turn on the additional modes, or pick another default preset.",
       "default_preset_missing": "The select has no option for the default preset."
     }

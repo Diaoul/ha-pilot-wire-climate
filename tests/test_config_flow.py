@@ -180,3 +180,40 @@ async def test_options_flow_validates(hass: HomeAssistant, select_entity):
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"base": "default_preset_not_offered"}
     assert entry.options["additional_modes"] is True
+
+
+@pytest.mark.parametrize("options", [["low", "high"], None])
+async def test_select_must_be_pilot_wire(hass: HomeAssistant, select_entity, options):
+    if options is None:
+        hass.states.async_remove(SELECT)
+    else:
+        hass.states.async_set(SELECT, "low", {"options": options})
+
+    result = await configure(hass, select=SELECT)
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "not_pilot_wire"}
+
+
+async def test_select_used_once(hass: HomeAssistant, select_entity):
+    await setup_helper(hass, helper_entry())
+
+    result = await configure(hass, select=SELECT)
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "select_in_use"}
+
+
+async def test_options_flow_rejects_select_in_use(hass: HomeAssistant, select_entity):
+    hass.states.async_set(OTHER, "eco", {"options": SIX_OPTIONS})
+    await setup_helper(hass, helper_entry(select=OTHER))
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {**entry.options, "select": OTHER}
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "select_in_use"}

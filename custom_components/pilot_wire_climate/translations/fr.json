@@ -26,6 +26,8 @@
       }
     },
     "error": {
+      "select_in_use": "Un autre thermostat fil pilote utilise déjà ce select.",
+      "not_pilot_wire": "Le select n'a aucune option fil pilote, ou n'est pas disponible.",
       "default_preset_not_offered": "Le mode par défaut doit être un mode proposé par le thermostat : activez les modes supplémentaires ou choisissez un autre mode par défaut.",
       "default_preset_missing": "Le select n'a pas d'option pour le mode par défaut."
     }
@@ -54,6 +56,8 @@
       }
     },
     "error": {
+      "select_in_use": "Un autre thermostat fil pilote utilise déjà ce select.",
+      "not_pilot_wire": "Le select n'a aucune option fil pilote, ou n'est pas disponible.",
       "default_preset_not_offered": "Le mode par défaut doit être un mode proposé par le thermostat : activez les modes supplémentaires ou choisissez un autre mode par défaut.",
       "default_preset_missing": "Le select n'a pas d'option pour le mode par défaut."
     }

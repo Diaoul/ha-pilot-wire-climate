@@ -34,7 +34,7 @@ Cliquez sur le bouton ci-dessus pour ajouter ce dépôt à HACS, puis téléchar
 
 1. Allez dans **Paramètres** → **Appareils et services** → [**Entrées**](https://my.home-assistant.io/redirect/helpers/)
 2. **Créer une entrée** → **Thermostat Fil Pilote**
-3. **Choisissez le select fil pilote du module** (obligatoire) - un `select` ou un `input_select`
+3. **Choisissez le select fil pilote du module** (obligatoire) - un `select` ou un `input_select` avec des options fil pilote, non utilisé par un autre thermostat
 4. **(Optionnel)** Choisissez un capteur de température, d'humidité et de puissance
 5. **(Optionnel)** Réglez le seuil de puissance, le mode par défaut et l'affichage des modes Confort -1 °C et -2 °C
 
