@@ -378,16 +378,22 @@ async def test_sensor_updates(hass: HomeAssistant, select_entity):
 
 
 @pytest.mark.parametrize("value", ["abc", "inf"])
-async def test_invalid_sensor_value_keeps_last_reading(
+async def test_invalid_sensor_value_clears_reading(
     hass: HomeAssistant, select_entity, caplog, value
 ):
-    entity_id = await setup_with_sensors(hass)
+    entity_id = await setup_with_sensors(hass, power="1000")
 
     hass.states.async_set(TEMPERATURE, value)
+    hass.states.async_set(HUMIDITY, value)
+    hass.states.async_set(POWER, value)
     await hass.async_block_till_done()
 
-    assert hass.states.get(entity_id).attributes["current_temperature"] == 20.5
-    assert "Unable to update from temperature sensor" in caplog.text
+    state = hass.states.get(entity_id)
+    assert state.attributes["current_temperature"] is None
+    assert "current_humidity" not in state.attributes
+    assert "hvac_action" not in state.attributes
+    for sensor in ("temperature", "humidity", "power"):
+        assert f"Unable to update from {sensor} sensor" in caplog.text
 
 
 async def test_reads_sources_once_home_assistant_started(

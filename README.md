@@ -15,7 +15,7 @@ A Home Assistant helper that turns a pilot wire heater module into a proper `cli
 - 🧩 **Only What the Module Supports** - Presets the select has no option for are not offered
 - 🏷️ **Linked to the Module** - The thermostat joins the select's device, is named after it, and hides the now redundant select
 - 🔄 **Follows Renames** - Renaming the select or a sensor updates the thermostat instead of breaking it
-- 🔌 **Availability Handling** - The thermostat is unavailable while its select is, and a sensor reading clears while its sensor is unavailable
+- 🔌 **Availability Handling** - The thermostat is unavailable while its select is, and a sensor reading clears while its sensor is unavailable or reports no number
 - ⚙️ **Editable** - Every setting, the select included, can be changed afterwards from the helper's options
 
 ## 📦 Installation

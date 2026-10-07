@@ -373,6 +373,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             return
         if (value := _finite_float(raw)) is None:
             _LOGGER.error("Unable to update from temperature sensor: %s", raw)
+            self._cur_temperature = None
             return
         self._cur_temperature = value
         unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
@@ -386,6 +387,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             return
         if (value := _finite_float(raw)) is None:
             _LOGGER.error("Unable to update from humidity sensor: %s", raw)
+            self._cur_humidity = None
             return
         self._cur_humidity = value
 
@@ -396,6 +398,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             return
         if (value := _finite_float(raw)) is None:
             _LOGGER.error("Unable to update from power sensor: %s", raw)
+            self._cur_power = None
             return
         self._cur_power = value
 

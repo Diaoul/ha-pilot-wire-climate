@@ -15,7 +15,7 @@ Une entrée (helper) Home Assistant qui transforme un module fil pilote en véri
 - 🧩 **Seulement ce que le module accepte** - Les modes absents du select ne sont pas proposés
 - 🏷️ **Rattaché au module** - Le thermostat rejoint l'appareil du select, en prend le nom et masque le select devenu redondant
 - 🔄 **Suit les renommages** - Renommer le select ou un capteur met à jour le thermostat au lieu de le casser
-- 🔌 **Gestion de la disponibilité** - Le thermostat est indisponible quand son select l'est, et une mesure s'efface quand son capteur est indisponible
+- 🔌 **Gestion de la disponibilité** - Le thermostat est indisponible quand son select l'est, et une mesure s'efface quand son capteur est indisponible ou ne donne pas de nombre
 - ⚙️ **Modifiable** - Tous les réglages, select compris, se changent ensuite depuis les options de l'entrée
 
 ## 📦 Installation
