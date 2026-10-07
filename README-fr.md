@@ -68,7 +68,7 @@ Le thermostat est une vue du select : la seule chose qu'il conserve lui-même es
 - **Choisir un mode** sélectionne l'option correspondante, ce qui rallume aussi un thermostat arrêté
 - **Allumer** revient au dernier mode, ou au mode par défaut s'il n'y en a pas ; allumer un thermostat déjà en chauffe n'envoie rien
 - **L'état de chauffe** vaut `heating` au-dessus du seuil de puissance, `idle` en dessous, et `off` dès que le thermostat est arrêté, avec ou sans capteur de puissance
-- **Une option inconnue** est affichée comme Confort et signalée par un avertissement dans les journaux
+- **Une option inconnue**, ou celle d'un mode non proposé, s'affiche en chauffe sans mode ; une option inconnue est aussi signalée par un avertissement dans les journaux
 
 ## 🔌 Compatibilité
 

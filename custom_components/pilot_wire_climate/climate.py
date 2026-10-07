@@ -282,12 +282,11 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         """Preset current mode."""
         if self._cur_mode is None:
             return None
-        if (value := get_value_key(self._cur_mode)) is None:
-            return PRESET_COMFORT
-        if value == VALUE_OFF:
+        value = get_value_key(self._cur_mode)
+        if value is None or value == VALUE_OFF:
             return None
         preset = VALUE_TO_PRESET[value]
-        return preset if preset in self.preset_modes else PRESET_COMFORT
+        return preset if preset in self.preset_modes else None
 
     @override
     async def async_set_preset_mode(self, preset_mode: str) -> None:
@@ -357,7 +356,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             return
         if (value := get_value_key(self._cur_mode)) is None:
             _LOGGER.warning(
-                "%s reports unknown pilot wire mode %s, shown as comfort",
+                "%s reports unknown pilot wire mode %s, shown with no preset",
                 self.preset_entity_id,
                 self._cur_mode,
             )
