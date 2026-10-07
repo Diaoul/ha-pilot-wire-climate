@@ -1,0 +1,22 @@
+[env]
+_.python.venv = { path = "{{config_root}}/.venv", create = true }
+
+[tools]
+python = "3.14.8"
+uv = "latest"
+
+[tasks.setup]
+description = "Install the test and lint dependencies"
+run = "uv pip install -r requirements_test.txt"
+
+[tasks.test]
+description = "Run the tests"
+run = "pytest"
+
+[tasks.lint]
+description = "Check formatting, lint and types"
+run = ["ruff format --check", "ruff check", "mypy"]
+
+[tasks.format]
+description = "Format and fix what ruff can"
+run = ["ruff format", "ruff check --fix"]

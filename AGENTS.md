@@ -81,14 +81,13 @@ if hvac_mode == self.hvac_mode:
 ## Verify before committing
 
 ```bash
-pip install -r requirements_test.txt
-pytest
-ruff check
-ruff format --check
-mypy
+mise run setup   # once, and after a requirements bump
+mise run test
+mise run lint
 ```
 
-CI runs the same, plus hassfest and the HACS validation. Tests use real Home
+`.mise.toml` pins Python and keeps a `.venv` at the repo root. CI runs the same
+tasks, plus hassfest and the HACS validation. Tests use real Home
 Assistant fixtures, not mocks of it; keep coverage near its current level, and
 when fixing a bug, check the new test fails without the fix.
 
