@@ -114,7 +114,7 @@ Semantic versioning. Anything that needs users to change their setup or
 automations is a major bump, whatever its size.
 
 The release is the `version` in `manifest.json`. Bump it in its own commit
-(`chore(release): X.Y.Z`) and push: once CI passes on `main`, the release workflow
+(`chore(release): X.Y.Z`) and push: once CI passes on `main`, its release job
 creates the GitHub release with the zip attached. Then edit the generated notes,
 which are empty for direct commits; put breaking changes under a `### Breaking`
 heading first, with the remedy.

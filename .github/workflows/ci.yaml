@@ -45,3 +45,27 @@ jobs:
       - uses: hacs/action@1ebf01c408f29afcb6406bd431bc98fd8cbb15aa # main
         with:
           category: integration
+
+  release:
+    needs: [test, lint, hassfest, hacs]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release and upload its zip
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Release the manifest version unless it already is
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(jq -r .version custom_components/pilot_wire_climate/manifest.json)
+          if gh release view "$version" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "$version is already released"
+            exit 0
+          fi
+          cd custom_components/pilot_wire_climate
+          zip -r pilot_wire_climate.zip .
+          gh release create "$version" pilot_wire_climate.zip \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$version" --generate-notes
