@@ -1,5 +1,0 @@
-extend = "../pyproject.toml"
-
-[lint]
-# Test names say what they check
-extend-ignore = ["D100", "D103", "D104"]
