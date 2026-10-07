@@ -6,8 +6,7 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 
 # The mypy and ruff settings below are copied from Home Assistant core's
-# mypy.ini and pyproject.toml (2026.9.4); keep them in step when bumping
-# the pins in requirements_test.txt.
+# mypy.ini and pyproject.toml (2026.9.4).
 
 [tool.mypy]
 python_version = "3.14"
