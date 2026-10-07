@@ -3,12 +3,9 @@
 from collections.abc import Mapping
 from typing import Any, override
 
-import probatio
 from homeassistant.components.input_select import DOMAIN as INPUT_SELECT_DOMAIN
-from homeassistant.components.select import ATTR_OPTIONS
-from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
-from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.components.select import ATTR_OPTIONS, DOMAIN as SELECT_DOMAIN
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN, SensorDeviceClass
 from homeassistant.helpers import selector
 from homeassistant.helpers.schema_config_entry_flow import (
     SchemaCommonFlowHandler,
@@ -18,6 +15,7 @@ from homeassistant.helpers.schema_config_entry_flow import (
     SchemaOptionsFlowHandler,
 )
 from homeassistant.helpers.typing import VolDictType
+import probatio
 
 from .const import (
     CONF_ADDITIONAL_MODES,

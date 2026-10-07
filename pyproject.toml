@@ -18,3 +18,9 @@ implicit_reexport = true
 extend-select = ["PT"]
 # Home Assistant's entity and flow class attributes are mutable lists and dicts.
 extend-ignore = ["RUF012"]
+
+# Core's import style, so code ported from core helpers keeps its imports.
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+combine-as-imports = true
+split-on-trailing-comma = false
