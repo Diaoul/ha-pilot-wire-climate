@@ -1,5 +1,3 @@
-"""Config flow for Pilot Wire thermostat."""
-
 from collections.abc import Mapping
 from typing import Any, override
 
@@ -112,8 +110,6 @@ OPTIONS_STEP = SchemaFlowFormStep(
 
 
 class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
-    """Handle a config or options flow."""
-
     VERSION = 1
     MINOR_VERSION = 6
 
@@ -123,6 +119,5 @@ class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
 
     @override
     def async_config_entry_title(self, options: Mapping[str, Any]) -> str:
-        """Return config entry title and hide the select."""
         async_hide_select(self.hass, options[CONF_SELECT])
         return config_entry_title(self.hass, options[CONF_SELECT])

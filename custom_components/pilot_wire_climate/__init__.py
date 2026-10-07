@@ -1,5 +1,3 @@
-"""Pilot wire component."""
-
 import logging
 
 from homeassistant.components.climate import PRESET_AWAY
@@ -37,7 +35,6 @@ type PilotWireConfigEntry = ConfigEntry[str]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: PilotWireConfigEntry) -> bool:
-    """Set up from a config entry."""
     entry.runtime_data = entry.options[CONF_SELECT]
 
     def set_option(key: str, entity_id: str) -> None:
@@ -84,7 +81,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: PilotWireConfigEntry) ->
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: PilotWireConfigEntry) -> bool:
-    """Unload a config entry."""
     previous, current = entry.runtime_data, entry.options[CONF_SELECT]
     # The options flow saves a new select and then reloads: this is the only
     # point that sees both the old select and the new one.
@@ -104,7 +100,6 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
 
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
-    """Migrate old entry."""
     if config_entry.version > 1:
         return False
 

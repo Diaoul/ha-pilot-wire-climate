@@ -1,5 +1,3 @@
-"""Helpers for the pilot wire climate integration."""
-
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device import async_entity_id_to_device
@@ -11,7 +9,6 @@ from .const import OFF_OPTIONS, PRESET_OPTIONS
 
 
 def option_preset(option: str) -> str | None:
-    """Return the preset a select option stands for."""
     for preset, names in PRESET_OPTIONS.items():
         if option in names:
             return preset
@@ -19,7 +16,6 @@ def option_preset(option: str) -> str | None:
 
 
 def is_pilot_wire_option(option: str) -> bool:
-    """Return whether a select option is a pilot wire mode."""
     return option in OFF_OPTIONS or option_preset(option) is not None
 
 

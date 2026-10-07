@@ -1,5 +1,3 @@
-"""Platform for Pilot Wire."""
-
 import logging
 import math
 from typing import override
@@ -69,13 +67,10 @@ async def async_setup_entry(
     config_entry: PilotWireConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Initialize config entry."""
     async_add_entities([PilotWireClimate(hass, config_entry)])
 
 
 class PilotWireClimate(ClimateEntity, RestoreEntity):
-    """Representation of a Pilot Wire device."""
-
     _attr_has_entity_name = True
     _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
     _attr_should_poll = False
@@ -88,7 +83,6 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
     _attr_translation_key: str = "pilot_wire"
 
     def __init__(self, hass: HomeAssistant, config_entry: PilotWireConfigEntry) -> None:
-        """Initialize the climate device."""
         options = config_entry.options
         self._select: str = options[CONF_SELECT]
         self._temperature_sensor: str | None = options.get(CONF_TEMPERATURE_SENSOR)
@@ -112,7 +106,6 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
 
     @override
     async def async_added_to_hass(self) -> None:
-        """Restore the last preset and follow the select and sensors."""
         await super().async_added_to_hass()
 
         if (data := await self.async_get_last_extra_data()) is not None:
@@ -203,7 +196,6 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             self._power = PowerConverter.convert(self._power, unit, UnitOfPower.WATT)
 
     def _read_float(self, state: State | None, sensor: str) -> float | None:
-        """Return the sensor's reading, or None while it has none."""
         if state is None or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
             return None
         try:
@@ -230,7 +222,6 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         return state.attributes.get(ATTR_OPTIONS, []) if state else []
 
     def _get_option(self, mode: str) -> str:
-        """Return the select option for off or for a preset."""
         names = OFF_OPTIONS if mode == HVACMode.OFF else PRESET_OPTIONS[mode]
         for option in self._options():
             if option in names:
@@ -244,14 +235,13 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
     @override
     @property
     def available(self) -> bool:
-        """Return whether the select driving the heater is available."""
         state = self.hass.states.get(self._select)
         return state is not None and state.state != STATE_UNAVAILABLE
 
     @override
     @property
     def hvac_action(self) -> HVACAction | None:
-        """Return the current running hvac operation."""
+        # Even when off: drawing power then means the module ignored off.
         if self._power is not None and self._power > self._power_threshold:
             return HVACAction.HEATING
         if self.hvac_mode == HVACMode.OFF:
@@ -263,7 +253,6 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
     @override
     @property
     def hvac_mode(self) -> HVACMode | None:
-        """Return hvac operation ie. heat, off mode."""
         if self._mode is None:
             return None
         if self._mode in OFF_OPTIONS:
@@ -273,7 +262,6 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
     @override
     @property
     def preset_modes(self) -> list[str]:
-        """List the presets that the select has an option for."""
         options = self._options()
         return [
             preset
@@ -285,7 +273,6 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
     @override
     @property
     def preset_mode(self) -> str | None:
-        """Preset current mode."""
         if self._mode is None:
             return None
         preset = option_preset(self._mode)
@@ -299,7 +286,6 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
 
     @override
     async def async_set_preset_mode(self, preset_mode: str) -> None:
-        """Set preset mode."""
         if preset_mode == self.preset_mode:
             # Every select_option is a radio command to the module.
             return
@@ -307,7 +293,6 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
 
     @override
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
-        """Set new target hvac mode."""
         if hvac_mode == self.hvac_mode:
             # Otherwise turning on a heating thermostat would reset its preset.
             return

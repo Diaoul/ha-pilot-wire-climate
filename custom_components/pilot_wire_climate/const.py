@@ -1,5 +1,3 @@
-"""Constants for the pilot wire climate integration."""
-
 from homeassistant.components.climate import PRESET_AWAY, PRESET_COMFORT, PRESET_ECO
 
 DOMAIN = "pilot_wire_climate"
