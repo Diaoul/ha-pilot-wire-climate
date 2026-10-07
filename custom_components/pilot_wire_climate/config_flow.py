@@ -18,6 +18,7 @@ from homeassistant.helpers.typing import VolDictType
 import probatio
 
 from .const import (
+    ADDITIONAL_PRESETS,
     CONF_ADDITIONAL_MODES,
     CONF_DEFAULT_PRESET,
     CONF_HUMIDITY_SENSOR,
@@ -27,8 +28,6 @@ from .const import (
     CONF_TEMPERATURE_SENSOR,
     DEFAULT_DEFAULT_PRESET,
     DOMAIN,
-    PRESET_COMFORT_1,
-    PRESET_COMFORT_2,
     PRESET_OPTIONS,
 )
 from .util import (
@@ -100,10 +99,7 @@ async def validate_options(
         raise SchemaFlowError("not_pilot_wire")
 
     default_preset = user_input[CONF_DEFAULT_PRESET]
-    if not user_input[CONF_ADDITIONAL_MODES] and default_preset in (
-        PRESET_COMFORT_1,
-        PRESET_COMFORT_2,
-    ):
+    if not user_input[CONF_ADDITIONAL_MODES] and default_preset in ADDITIONAL_PRESETS:
         raise SchemaFlowError("default_preset_not_offered")
     if not any(option_preset(option) == default_preset for option in options):
         raise SchemaFlowError("default_preset_missing")

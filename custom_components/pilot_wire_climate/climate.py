@@ -44,6 +44,7 @@ from homeassistant.util.unit_conversion import PowerConverter, TemperatureConver
 
 from . import PilotWireConfigEntry
 from .const import (
+    ADDITIONAL_PRESETS,
     CONF_ADDITIONAL_MODES,
     CONF_DEFAULT_PRESET,
     CONF_HUMIDITY_SENSOR,
@@ -54,8 +55,6 @@ from .const import (
     DEFAULT_DEFAULT_PRESET,
     DOMAIN,
     OFF_OPTIONS,
-    PRESET_COMFORT_1,
-    PRESET_COMFORT_2,
     PRESET_OPTIONS,
 )
 from .util import option_preset
@@ -264,10 +263,7 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         return [
             preset
             for preset, names in PRESET_OPTIONS.items()
-            if (
-                self._additional_modes
-                or preset not in (PRESET_COMFORT_1, PRESET_COMFORT_2)
-            )
+            if (self._additional_modes or preset not in ADDITIONAL_PRESETS)
             and any(option in names for option in options)
         ]
 
