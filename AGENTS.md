@@ -113,11 +113,17 @@ When behaviour changes, update in the same commit:
 Semantic versioning. Anything that needs users to change their setup or
 automations is a major bump, whatever its size.
 
-The release is the `version` in `manifest.json`. Bump it in its own commit
-(`chore(release): X.Y.Z`) and push: once CI passes on `main`, its release job
-creates the GitHub release with the zip attached. Then edit the generated notes,
-which are empty for direct commits; put breaking changes under a `### Breaking`
-heading first, with the remedy.
+[release-please](https://github.com/googleapis/release-please) releases from
+the commits. After each push to `main` that passes CI, it opens or updates a
+`chore(release): X.Y.Z` pull request that bumps the `version` in
+`manifest.json` and writes `CHANGELOG.md`; `feat` makes it a minor, `!` a major.
+Merging that pull request tags the release, and the same CI job attaches the
+zip. Never bump the version by hand.
+
+The release notes are the `feat` and `fix` summaries, and each
+`BREAKING CHANGE:` footer verbatim, so write that footer as the remedy users
+read. The release pull request gets no CI run, since it is opened with the
+workflow token; it touches only the version and changelog.
 
 ## Commits
 

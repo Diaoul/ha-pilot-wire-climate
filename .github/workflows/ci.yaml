@@ -58,21 +58,21 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
-      contents: write # create the release and upload its zip
+      contents: write # tag, create the release and upload its zip
+      issues: write # label the release pull request
+      pull-requests: write # open and update the release pull request
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+      - if: steps.release.outputs.release_created
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Release the manifest version unless it already is
+      - if: steps.release.outputs.release_created
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release.outputs.tag_name }}
         run: |
-          version=$(jq -r .version custom_components/pilot_wire_climate/manifest.json)
-          if gh release view "$version" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-            echo "$version is already released"
-            exit 0
-          fi
           cd custom_components/pilot_wire_climate
           zip -r pilot_wire_climate.zip .
-          gh release create "$version" pilot_wire_climate.zip \
-            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$version" --generate-notes
+          gh release upload "$TAG" pilot_wire_climate.zip --repo "$GITHUB_REPOSITORY"
