@@ -12,7 +12,7 @@ from homeassistant.helpers.schema_config_entry_flow import (
     SchemaFlowFormStep,
 )
 from homeassistant.helpers.typing import VolDictType
-import voluptuous as vol
+import probatio
 
 from .const import (
     CONF_ADDITIONAL_MODES,
@@ -29,31 +29,31 @@ from .const import (
 from .util import async_hide_select, config_entry_title
 
 OPTIONS_SCHEMA: VolDictType = {
-    vol.Required(CONF_SELECT): selector.EntitySelector(
+    probatio.Required(CONF_SELECT): selector.EntitySelector(
         selector.EntitySelectorConfig(domain=[SELECT_DOMAIN, INPUT_SELECT_DOMAIN])
     ),
-    vol.Optional(CONF_TEMPERATURE_SENSOR): selector.EntitySelector(
+    probatio.Optional(CONF_TEMPERATURE_SENSOR): selector.EntitySelector(
         selector.EntitySelectorConfig(
             domain=SENSOR_DOMAIN, device_class=SensorDeviceClass.TEMPERATURE
         )
     ),
-    vol.Optional(CONF_HUMIDITY_SENSOR): selector.EntitySelector(
+    probatio.Optional(CONF_HUMIDITY_SENSOR): selector.EntitySelector(
         selector.EntitySelectorConfig(
             domain=SENSOR_DOMAIN, device_class=SensorDeviceClass.HUMIDITY
         )
     ),
-    vol.Optional(CONF_POWER_SENSOR): selector.EntitySelector(
+    probatio.Optional(CONF_POWER_SENSOR): selector.EntitySelector(
         selector.EntitySelectorConfig(
             domain=SENSOR_DOMAIN, device_class=SensorDeviceClass.POWER
         )
     ),
-    vol.Optional(CONF_ADDITIONAL_MODES, default=True): selector.BooleanSelector(),
-    vol.Optional(CONF_POWER_THRESHOLD, default=0): selector.NumberSelector(
+    probatio.Optional(CONF_ADDITIONAL_MODES, default=True): selector.BooleanSelector(),
+    probatio.Optional(CONF_POWER_THRESHOLD, default=0): selector.NumberSelector(
         selector.NumberSelectorConfig(
             min=0, step=1, unit_of_measurement="W", mode=selector.NumberSelectorMode.BOX
         )
     ),
-    vol.Optional(
+    probatio.Optional(
         CONF_DEFAULT_PRESET, default=DEFAULT_DEFAULT_PRESET
     ): selector.SelectSelector(
         selector.SelectSelectorConfig(
@@ -65,11 +65,11 @@ OPTIONS_SCHEMA: VolDictType = {
 }
 
 CONFIG_FLOW = {
-    "user": SchemaFlowFormStep(vol.Schema(OPTIONS_SCHEMA)),
+    "user": SchemaFlowFormStep(probatio.Schema(OPTIONS_SCHEMA)),
 }
 
 OPTIONS_FLOW = {
-    "init": SchemaFlowFormStep(vol.Schema(OPTIONS_SCHEMA)),
+    "init": SchemaFlowFormStep(probatio.Schema(OPTIONS_SCHEMA)),
 }
 
 
