@@ -340,6 +340,21 @@ async def test_hvac_action(hass: HomeAssistant, select_entity, option, power, ac
     assert hass.states.get(entity_id).attributes["hvac_action"] == action
 
 
+@pytest.mark.parametrize(
+    ("power", "unit", "action"),
+    [("1.5", "kW", "heating"), ("0.004", "kW", "idle"), ("6", "W", "heating")],
+)
+async def test_power_threshold_in_watts(
+    hass: HomeAssistant, select_entity, power, unit, action
+):
+    entity_id = await setup_with_sensors(hass)
+
+    hass.states.async_set(POWER, power, {"unit_of_measurement": unit})
+    await hass.async_block_till_done()
+
+    assert hass.states.get(entity_id).attributes["hvac_action"] == action
+
+
 async def test_no_hvac_action_without_power_sensor(hass: HomeAssistant, select_entity):
     entry = helper_entry()
     await setup_helper(hass, entry)

@@ -20,6 +20,7 @@ from homeassistant.const import (
     EVENT_HOMEASSISTANT_START,
     STATE_UNAVAILABLE,
     STATE_UNKNOWN,
+    UnitOfPower,
     UnitOfTemperature,
 )
 from homeassistant.core import (
@@ -40,6 +41,7 @@ from homeassistant.helpers.restore_state import (
     RestoredExtraData,
     RestoreEntity,
 )
+from homeassistant.util.unit_conversion import PowerConverter
 
 from . import PilotWireConfigEntry
 from .const import (
@@ -400,6 +402,10 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             _LOGGER.error("Unable to update from power sensor: %s", raw)
             self._cur_power = None
             return
+        # The threshold is set in watts.
+        unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
+        if unit in PowerConverter.VALID_UNITS:
+            value = PowerConverter.convert(value, unit, UnitOfPower.WATT)
         self._cur_power = value
 
     async def _async_set_mode_value(self, value: str) -> None:
