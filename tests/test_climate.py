@@ -135,6 +135,19 @@ async def test_missing_option_error(hass: HomeAssistant, select_entity):
     assert str(error.value) == f"{SELECT} has no option for the off pilot wire mode"
 
 
+async def test_set_current_preset_sends_nothing(hass: HomeAssistant, select_entity):
+    hass.states.async_set(SELECT, "Eco", {"options": ["Off", "Eco", "Comfort"]})
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+    calls = async_mock_service(hass, "select", "select_option")
+
+    await call(
+        hass, "set_preset_mode", climate_entity_id(hass, entry), preset_mode="eco"
+    )
+
+    assert calls == []
+
+
 async def test_select_call_carries_context(hass: HomeAssistant, select_entity):
     entry = helper_entry()
     await setup_helper(hass, entry)

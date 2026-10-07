@@ -291,6 +291,9 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
     @override
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set preset mode."""
+        if preset_mode == self.preset_mode:
+            # Every select_option is a radio command to the module.
+            return
         await self._async_set_mode_value(self._get_option(PRESET_TO_VALUE[preset_mode]))
 
     # Modes
