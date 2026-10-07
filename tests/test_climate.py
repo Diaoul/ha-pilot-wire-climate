@@ -1,5 +1,5 @@
 from homeassistant.const import EVENT_HOMEASSISTANT_START
-from homeassistant.core import CoreState, HomeAssistant, State
+from homeassistant.core import Context, CoreState, HomeAssistant, ServiceCall, State
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 import pytest
 from pytest_homeassistant_custom_component.common import (
@@ -133,6 +133,38 @@ async def test_missing_option_error(hass: HomeAssistant, select_entity):
 
     assert error.value.translation_key == "missing_option"
     assert str(error.value) == f"{SELECT} has no option for the off pilot wire mode"
+
+
+async def test_select_call_carries_context(hass: HomeAssistant, select_entity):
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+    calls = async_mock_service(hass, "select", "select_option")
+    context = Context()
+
+    await hass.services.async_call(
+        "climate",
+        "set_preset_mode",
+        {"entity_id": climate_entity_id(hass, entry), "preset_mode": "eco"},
+        blocking=True,
+        context=context,
+    )
+
+    assert [c.context.id for c in calls] == [context.id]
+
+
+async def test_select_error_reaches_caller(hass: HomeAssistant, select_entity):
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+
+    async def fail(call: ServiceCall) -> None:
+        raise HomeAssistantError("module did not answer")
+
+    hass.services.async_register("select", "select_option", fail)
+
+    with pytest.raises(HomeAssistantError, match="module did not answer"):
+        await call(
+            hass, "set_preset_mode", climate_entity_id(hass, entry), preset_mode="eco"
+        )
 
 
 async def test_options_are_read_when_used(hass: HomeAssistant, select_entity):

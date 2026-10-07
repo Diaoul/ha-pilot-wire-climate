@@ -402,5 +402,9 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
             "option": value,
         }
         await self.hass.services.async_call(
-            split_entity_id(self.preset_entity_id)[0], SERVICE_SELECT_OPTION, data
+            split_entity_id(self.preset_entity_id)[0],
+            SERVICE_SELECT_OPTION,
+            data,
+            blocking=True,
+            context=self._context,
         )
