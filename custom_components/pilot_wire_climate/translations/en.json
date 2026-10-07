@@ -62,6 +62,12 @@
       "default_preset_missing": "The select has no option for the default preset."
     }
   },
+  "issues": {
+    "default_preset_not_offered": {
+      "title": "{title} turns on with a preset it does not offer",
+      "description": "{title} turns on with Comfort -1 °C or Comfort -2 °C when it has no previous preset, but the additional modes are off, so it then shows no preset. Edit the thermostat's options: turn on the additional modes, or pick another default preset."
+    }
+  },
   "exceptions": {
     "missing_option": {
       "message": "{entity_id} has no option for the {mode} mode"

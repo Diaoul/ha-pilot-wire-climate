@@ -62,6 +62,12 @@
       "default_preset_missing": "Le select n'a pas d'option pour le mode par défaut."
     }
   },
+  "issues": {
+    "default_preset_not_offered": {
+      "title": "{title} s'allume sur un mode qu'il ne propose pas",
+      "description": "{title} s'allume en Confort -1 °C ou Confort -2 °C quand il n'a pas de mode précédent, mais les modes supplémentaires sont désactivés : il n'affiche alors aucun mode. Modifiez les options du thermostat : activez les modes supplémentaires ou choisissez un autre mode par défaut."
+    }
+  },
   "exceptions": {
     "missing_option": {
       "message": "{entity_id} n'a pas d'option pour le mode {mode}"

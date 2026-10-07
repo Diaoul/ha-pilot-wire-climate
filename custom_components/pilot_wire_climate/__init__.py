@@ -4,7 +4,7 @@ from homeassistant.components.climate import PRESET_AWAY
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import Event, HomeAssistant
-from homeassistant.helpers import entity_registry as er
+from homeassistant.helpers import entity_registry as er, issue_registry as ir
 from homeassistant.helpers.device import async_entity_id_to_device_id
 from homeassistant.helpers.event import async_track_entity_registry_updated_event
 from homeassistant.helpers.helper_integration import (
@@ -16,12 +16,15 @@ from homeassistant.helpers.schema_config_entry_flow import (
 )
 
 from .const import (
+    ADDITIONAL_PRESETS,
+    CONF_ADDITIONAL_MODES,
     CONF_DEFAULT_PRESET,
     CONF_HUMIDITY_SENSOR,
     CONF_POWER_SENSOR,
     CONF_SELECT,
     CONF_TEMPERATURE_SENSOR,
     DEFAULT_DEFAULT_PRESET,
+    DOMAIN,
     PRESET_COMFORT_1,
     PRESET_COMFORT_2,
 )
@@ -36,6 +39,7 @@ type PilotWireConfigEntry = ConfigEntry[str]
 
 async def async_setup_entry(hass: HomeAssistant, entry: PilotWireConfigEntry) -> bool:
     entry.runtime_data = entry.options[CONF_SELECT]
+    _async_check_default_preset(hass, entry)
 
     def set_option(key: str, entity_id: str) -> None:
         hass.config_entries.async_update_entry(
@@ -80,6 +84,31 @@ async def async_setup_entry(hass: HomeAssistant, entry: PilotWireConfigEntry) ->
     return True
 
 
+def _default_preset_issue_id(entry: ConfigEntry) -> str:
+    return f"default_preset_not_offered_{entry.entry_id}"
+
+
+def _async_check_default_preset(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Report entries saved before the options flow refused this combination."""
+    issue_id = _default_preset_issue_id(entry)
+    if (
+        not entry.options.get(CONF_ADDITIONAL_MODES, True)
+        and entry.options.get(CONF_DEFAULT_PRESET, DEFAULT_DEFAULT_PRESET)
+        in ADDITIONAL_PRESETS
+    ):
+        ir.async_create_issue(
+            hass,
+            DOMAIN,
+            issue_id,
+            is_fixable=False,
+            severity=ir.IssueSeverity.WARNING,
+            translation_key="default_preset_not_offered",
+            translation_placeholders={"title": entry.title},
+        )
+    else:
+        ir.async_delete_issue(hass, DOMAIN, issue_id)
+
+
 async def async_unload_entry(hass: HomeAssistant, entry: PilotWireConfigEntry) -> bool:
     previous, current = entry.runtime_data, entry.options[CONF_SELECT]
     # The options flow saves a new select and then reloads: this is the only
@@ -97,6 +126,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: PilotWireConfigEntry) -
 async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Unhide the select entity that the config flow hid."""
     async_unhide_select(hass, entry.options[CONF_SELECT])
+    ir.async_delete_issue(hass, DOMAIN, _default_preset_issue_id(entry))
 
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:

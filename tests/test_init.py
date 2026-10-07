@@ -1,5 +1,9 @@
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import device_registry as dr, entity_registry as er
+from homeassistant.helpers import (
+    device_registry as dr,
+    entity_registry as er,
+    issue_registry as ir,
+)
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -153,3 +157,33 @@ async def test_migration_renames_option_keys(hass: HomeAssistant, select_entity)
         "power_threshold": 0,
         "default_preset": "eco",
     }
+
+
+async def test_repair_for_default_preset_not_offered(
+    hass: HomeAssistant, select_entity
+):
+    issues = ir.async_get(hass)
+    entry = helper_entry(additional_modes=False, default_preset="comfort_1")
+    await setup_helper(hass, entry)
+    issue_id = f"default_preset_not_offered_{entry.entry_id}"
+    assert issues.async_get_issue(DOMAIN, issue_id) is not None
+
+    hass.config_entries.async_update_entry(
+        entry, options={**entry.options, "default_preset": "eco"}
+    )
+    assert await hass.config_entries.async_reload(entry.entry_id)
+    await hass.async_block_till_done()
+    assert issues.async_get_issue(DOMAIN, issue_id) is None
+
+
+async def test_repair_removed_with_entry(hass: HomeAssistant, select_entity):
+    issues = ir.async_get(hass)
+    entry = helper_entry(additional_modes=False, default_preset="comfort_2")
+    await setup_helper(hass, entry)
+    issue_id = f"default_preset_not_offered_{entry.entry_id}"
+    assert issues.async_get_issue(DOMAIN, issue_id) is not None
+
+    await hass.config_entries.async_remove(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert issues.async_get_issue(DOMAIN, issue_id) is None
