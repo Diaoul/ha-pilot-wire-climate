@@ -1,34 +1,35 @@
-name: "Release"
+name: Release
 
 on:
-  release:
-    types: [published, edited]
+  workflow_run:
+    workflows: [Tests]
+    types: [completed]
+    branches: [master]
 
 permissions: {}
 
 jobs:
   release:
-    name: "Release"
-    runs-on: "ubuntu-latest"
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push'
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: "Checkout the repository"
-        uses: "actions/checkout@v4"
-
-      - name: "Adjust version number"
-        shell: "bash"
-        run: |
-          yq -i -o json '.version="${{ github.event.release.tag_name }}"' \
-            "${{ github.workspace }}/custom_components/pilot_wire_climate/manifest.json"
-
-      - name: "ZIP the integration directory"
-        shell: "bash"
-        run: |
-          cd "${{ github.workspace }}/custom_components/pilot_wire_climate"
-          zip pilot_wire_climate.zip -r ./
-
-      - name: "Upload the ZIP file to the release"
-        uses: softprops/action-gh-release@v2
+      - uses: actions/checkout@v4
         with:
-          files: ${{ github.workspace }}/custom_components/pilot_wire_climate/pilot_wire_climate.zip
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: Release the manifest version unless it already is
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          version=$(jq -r .version custom_components/pilot_wire_climate/manifest.json)
+          if gh release view "$version" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "$version is already released"
+            exit 0
+          fi
+          cd custom_components/pilot_wire_climate
+          zip -r pilot_wire_climate.zip .
+          gh release create "$version" pilot_wire_climate.zip \
+            --repo "$GITHUB_REPOSITORY" --target "$SHA" --title "$version" --generate-notes
