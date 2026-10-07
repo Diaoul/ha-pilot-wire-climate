@@ -62,17 +62,27 @@ jobs:
       issues: write # label the release pull request
       pull-requests: write # open and update the release pull request
     steps:
-      - id: release
-        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
-      - if: steps.release.outputs.release_created
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The release is a draft until its zip is attached: HACS installs the zip
+      # and would fail on a published release without one.
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - if: steps.release.outputs.release_created
+      # Keyed on the draft rather than on release_created, so that a rerun or
+      # the next push finishes a release whose upload failed.
+      - name: Attach the zip to a draft release and publish it
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.release.outputs.tag_name }}
         run: |
+          version=$(jq -r '."."' .release-please-manifest.json)
+          draft=$(gh release view "$version" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null || true)
+          if [ "$draft" != true ]; then
+            echo "No draft release for $version"
+            exit 0
+          fi
+          git fetch --quiet --depth 1 origin tag "$version"
+          git checkout --quiet "refs/tags/$version"
           cd custom_components/pilot_wire_climate
           zip -r pilot_wire_climate.zip .
-          gh release upload "$TAG" pilot_wire_climate.zip --repo "$GITHUB_REPOSITORY"
+          gh release upload "$version" pilot_wire_climate.zip --clobber --repo "$GITHUB_REPOSITORY"
+          gh release edit "$version" --draft=false --repo "$GITHUB_REPOSITORY"
