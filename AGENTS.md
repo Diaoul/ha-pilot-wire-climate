@@ -11,8 +11,7 @@ Consequences that are easy to miss:
 
 - **The repo is not what runs.** HACS installs the zip attached to a GitHub
   release. Nothing on `main` reaches a Home Assistant until it is released and
-  downloaded there, followed by a restart. When debugging, confirm which version
-  the install actually has.
+  downloaded there, followed by a restart.
 - **Config entry options are a public API.** They are stored in each user's
   config entry. Renaming a key or changing a value's format needs a config
   entry migration and a test feeding it an old entry.
@@ -69,8 +68,9 @@ live install's states and logs after a release.
 
 ## Debugging
 
-Read the select's history before reasoning from the code: what it reported,
-when, and what the thermostat showed then.
+Confirm which version the install actually has. Then read the select's
+history before reasoning from the code: what it reported, when, and what the
+thermostat showed then.
 
 ## Docs must match the code
 
@@ -79,18 +79,16 @@ commit.
 
 ## Versioning and releases
 
-Semantic versioning. Anything that needs users to change their setup or
-automations is a major bump, whatever its size.
-
-Never bump the version by hand; it is derived from the commits. The release
-notes are built from the `feat` and `fix` summaries and from each
-`BREAKING CHANGE:` footer, verbatim, so write that footer as the remedy users
-will read.
+Semantic versioning. Never bump the version by hand; it is derived from the
+commits. The release notes are built from the `feat` and `fix` summaries and
+from each `BREAKING CHANGE:` footer, verbatim, so write that footer as the
+remedy users will read.
 
 ## Commits
 
 [Conventional Commits](https://www.conventionalcommits.org/). A change that
-needs users to act gets a `!` and a `BREAKING CHANGE:` footer saying what to do.
+needs users to change their setup or automations, whatever its size, gets a `!`
+and a `BREAKING CHANGE:` footer saying what to do, which makes it a major.
 
 Write the summary in the imperative, lower case. The body explains the
 reasoning, not the diff: what was wrong, why this fix, and what tradeoff it
