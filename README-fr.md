@@ -1,62 +1,103 @@
-# README - Intégration Fil Pilote pour Home Assistant
+# 🔥 Pilot Wire Climate
 
-[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/Diaoul/ha-pilot-wire-climate/blob/master/README.md)
-[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/Diaoul/ha-pilot-wire-climate/blob/master/README-fr.md)
+[![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
 
-## Vue d'ensemble
-Cette intégration pour Home Assistant simplifie l'installation de modules fil pilote pour les systèmes de chauffage, en convertissant automatiquement plusieurs entités (`select` et `power`) en une seule entité `climate`. Des entités `sensor` de température et d'humidité peuvent également être ajoutées en option. Cette intégration est idéale pour contrôler et surveiller les modules fil pilote de chauffage.
+Une entrée (helper) Home Assistant qui transforme un module fil pilote en véritable entité `climate` : modes, marche/arrêt, détection de chauffe et, en option, température et humidité.
 
-### Caractéristiques principales
-- Convertit les entités `select` et `power` en une seule entité `climate`.
-- Utilise l'entité `select` pour ajuster les modes prédéfinis du fil pilote.
-- Utilise l'entité `power` pour détecter si le chauffage est actif.
-- Mode par défaut à l'allumage configurable.
-- Seuil de puissance configurable pour déterminer l'état de chauffe.
-- Prise en charge optionnelle d'entités `sensor` de température et d'humidité.
+[![Ouvrir Home Assistant et afficher ce dépôt dans HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Diaoul&repository=hass-pilot-wire-climate&category=integration)
 
-### Compatibilité
-L'intégration est compatible avec les appareils suivants ou tout thermostat contrôlable avec une entité de type select:
+## ✨ Fonctionnalités
+
+- 🎛️ **Modes depuis le select** - Confort, Confort -1 °C, Confort -2 °C, Éco et Hors-gel deviennent des modes du thermostat
+- 🔛 **Marche/Arrêt** - L'arrêt est le mode HVAC `off` ; le rallumage revient au dernier mode, même après un redémarrage
+- 🔥 **Détection de chauffe** - Un capteur de puissance et un seuil distinguent la chauffe du repos
+- 🌡️ **Température et humidité** - Capteurs optionnels affichés sur le thermostat
+- 🧩 **Seulement ce que le module accepte** - Les modes absents du select ne sont pas proposés
+- 🏷️ **Rattaché au module** - Le thermostat rejoint l'appareil du select, en prend le nom et masque le select devenu redondant
+- 🔄 **Suit les renommages** - Renommer le select ou un capteur met à jour le thermostat au lieu de le casser
+- 🔌 **Gestion de la disponibilité** - Le thermostat est indisponible quand son select l'est, et une mesure s'efface quand son capteur est indisponible
+- ⚙️ **Modifiable** - Tous les réglages, select compris, se changent ensuite depuis les options de l'entrée
+
+## 📦 Installation
+
+Cliquez sur le bouton ci-dessus pour ajouter ce dépôt à HACS, puis téléchargez **Pilot Wire Climate** et redémarrez Home Assistant.
+
+**Nécessite Home Assistant 2026.10 ou plus récent** (vérifié par HACS).
+
+> **Si vous venez de [faizpuru/ha-pilot-wire-climate](https://github.com/faizpuru/ha-pilot-wire-climate) :**
+> ce fork n'a ni configuration YAML ni mode `none`. Recréez les thermostats
+> YAML en tant qu'entrées, et faites passer les automatisations qui utilisent
+> le mode `none` au mode HVAC `off`. Les thermostats créés depuis l'interface
+> sont migrés automatiquement.
+
+## 🚀 Démarrage rapide
+
+1. Allez dans **Paramètres** → **Appareils et services** → [**Entrées**](https://my.home-assistant.io/redirect/helpers/)
+2. **Créer une entrée** → **Thermostat Fil Pilote**
+3. **Choisissez le select fil pilote du module** (obligatoire) - un `select` ou un `input_select`
+4. **(Optionnel)** Choisissez un capteur de température, d'humidité et de puissance
+5. **(Optionnel)** Réglez le seuil de puissance, le mode par défaut et l'affichage des modes Confort -1 °C et -2 °C
+
+Le thermostat apparaît sur l'appareil du module, sous son nom.
+
+## 🔧 Options
+
+| Option | Par défaut | Description |
+| :----- | :--------- | :---------- |
+| Entité de sélection | obligatoire | Le `select` ou `input_select` fil pilote du module |
+| Capteur de température | aucun | Affiché comme température actuelle, dans l'unité du capteur |
+| Capteur d'humidité | aucun | Affiché comme humidité actuelle |
+| Capteur de puissance | aucun | Distingue la chauffe du repos |
+| Modes supplémentaires | activé | Propose Confort -1 °C et Confort -2 °C quand le select les a |
+| Seuil de puissance | 0 W | Puissance au-delà de laquelle le radiateur est considéré en chauffe |
+| Mode par défaut | Confort | Mode utilisé pour allumer un thermostat qui n'a pas de mode précédent |
+
+## 🧠 Fonctionnement
+
+Le thermostat est une vue du select : la seule chose qu'il conserve lui-même est le dernier mode.
+
+| Option du select | Thermostat |
+| :--------------- | :--------- |
+| `comfort`, `Comfort` | Chauffe, Confort |
+| `comfort_-1`, `ComfortMinus1` | Chauffe, Confort -1 °C |
+| `comfort_-2`, `ComfortMinus2` | Chauffe, Confort -2 °C |
+| `eco`, `Eco` | Chauffe, Éco |
+| `frost_protection`, `FrostProtection` | Chauffe, Hors-gel (`away`) |
+| `off`, `Off` | Arrêt |
+
+- **Choisir un mode** sélectionne l'option correspondante, ce qui rallume aussi un thermostat arrêté
+- **Allumer** revient au dernier mode, ou au mode par défaut s'il n'y en a pas ; allumer un thermostat déjà en chauffe n'envoie rien
+- **L'état de chauffe** vaut `heating` au-dessus du seuil de puissance, `idle` en dessous, et `off` dès que le thermostat est arrêté, avec ou sans capteur de puissance
+- **Une option inconnue** est affichée comme Confort et signalée par un avertissement dans les journaux
+
+## 🔌 Compatibilité
+
+Tout module qui expose son mode fil pilote sous forme de select avec les options ci-dessus, notamment :
+
 - **Equation** : SIN-4-FP-21_EQU
 - **Legrand** : 064882
 - **NodOn** : SIN-4-FP-20, SIN-4-FP-21
 
-## Installation
+## ⚙️ Détails techniques
 
-### Option 1 : Utilisation de HACS (Home Assistant Community Store)
-[![Ouvre Home Assistant et charge le repository dans HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Diaoul&repository=ha-pilot-wire-climate&category=integration)
+- **Pas d'interrogation :** le thermostat réagit uniquement aux changements d'état de son select et de ses capteurs
+- **Démarrage :** les sources sont lues une fois Home Assistant démarré
+- **Reprise après redémarrage :** le dernier mode est conservé, donc rallumer après un redémarrage y revient
+- **Suppression :** supprimer l'entrée réaffiche le select, sauf si vous l'aviez masqué vous-même
 
-1. Utilisez le bouton au dessus ou bien cherchez "Wire Pilot Climate" dans HACS
-2. Installez l'intégration, puis redémarrez Home Assistant.
+## 🤝 Support
 
-### Option 2 : Installation manuelle
-1. Copiez les fichiers de l'intégration dans le répertoire des composants personnalisés de Home Assistant.
-2. Redémarrez Home Assistant.
-3. Ajoutez l'intégration via l'interface utilisateur de Home Assistant.
-
-## Configuration
-Cette intégration se configure uniquement via l'interface utilisateur de Home Assistant.
-
-> [!IMPORTANT]  
-> Cette intégration est implémentée comme un **Helper** dans Home Assistant et non comme une intégration personnalisée classique.
-> 
-> Pour initialiser ce helper, suivez ce chemin dans votre interface Home Assistant :
-> 1. Paramètres
-> 2. Appareils et Services
-> 3. Entrées
-> 4. Créer une entrée
-> 5. Thermostat Fil Pilote
->
-> Une fois configuré, l'entité climate apparaîtra dans l'onglet Entrées. Elle sera également automatiquement liée à l'appareil de l'entité select choisie lors de la configuration.
-
-## 🤝 Contributions
-Les contributions sont les bienvenues ! N'hésitez pas à :
-
-- 🐛 Signaler des bugs
-- 💡 Suggérer des améliorations
-- 🔀 Soumettre des pull requests
-
-## 📄 Licence
-Ce projet est sous licence MIT. Consultez le fichier LICENSE pour plus de détails.
+En cas de problème :
+- Activez les journaux de débogage pour `custom_components.pilot_wire_climate` et consultez-les
+- Vérifiez les options du select dans **Outils de développement** → **États**
+- Ouvrez un ticket sur [GitHub](https://github.com/Diaoul/hass-pilot-wire-climate/issues)
 
 ---
-Si vous trouvez cette intégration utile, pensez à lui donner une ⭐️ sur GitHub !
+
+## 📄 Licence
+
+Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour les détails.
+
+---
+
+Fork de [faizpuru/ha-pilot-wire-climate](https://github.com/faizpuru/ha-pilot-wire-climate), fait avec ❤️ pour la communauté Home Assistant

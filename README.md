@@ -1,64 +1,103 @@
-# README - Pilot Wire Integration for Home Assistant
+# 🔥 Pilot Wire Climate
 
-[![en](https://img.shields.io/badge/lang-en-red.svg)](https://github.com/Diaoul/ha-pilot-wire-climate/blob/master/README.md)
-[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/Diaoul/ha-pilot-wire-climate/blob/master/README-fr.md)
+[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](README-fr.md)
 
-## Overview
-This Home Assistant integration simplifies the setup of pilot wire modules for heating systems, providing seamless conversion of multiple entities (`select` and `power`) into a unified `climate` entity. Optional temperature and humidity `sensor` entities can also be added. This integration is ideal for controlling pilot wire heating modules, enabling streamlined control and monitoring of heating states.
+A Home Assistant helper that turns a pilot wire heater module into a proper `climate` entity, with presets, on/off, heating detection and optional temperature and humidity readings.
 
-### Key Features
-- Converts `select` and `power` entities into a single `climate` entity.
-- Utilizes the `select` entity to adjust the pilot wire preset modes.
-- Uses the `power` entity to detect whether the heating is on or off.
-- Configurable power threshold to determine heating state.
-- Configurable default power on preset.
-- Optional support for temperature and humidity `sensor` entities.
+[![Open your Home Assistant instance and open this repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Diaoul&repository=hass-pilot-wire-climate&category=integration)
 
-### Compatibility
-The integration is compatible with the following devices or any climate manageable with a select entity :
+## ✨ Features
+
+- 🎛️ **Presets from the Select** - Comfort, Comfort -1 °C, Comfort -2 °C, Eco and Frost protection map to climate presets
+- 🔛 **On/Off** - Off is the HVAC mode; turning back on restores the last preset, even across restarts
+- 🔥 **Heating Detection** - A power sensor and a threshold tell heating from idle
+- 🌡️ **Temperature and Humidity** - Optional sensors shown on the thermostat
+- 🧩 **Only What the Module Supports** - Presets the select has no option for are not offered
+- 🏷️ **Linked to the Module** - The thermostat joins the select's device, is named after it, and hides the now redundant select
+- 🔄 **Follows Renames** - Renaming the select or a sensor updates the thermostat instead of breaking it
+- 🔌 **Availability Handling** - The thermostat is unavailable while its select is, and a sensor reading clears while its sensor is unavailable
+- ⚙️ **Editable** - Every setting, the select included, can be changed afterwards from the helper's options
+
+## 📦 Installation
+
+Click the button above to add this repository to HACS, then download **Pilot Wire Climate** and restart Home Assistant.
+
+**Requires Home Assistant 2026.10 or newer** (enforced by HACS).
+
+> **Coming from [faizpuru/ha-pilot-wire-climate](https://github.com/faizpuru/ha-pilot-wire-climate):**
+> this fork has no YAML configuration and no `none` preset. Recreate YAML
+> thermostats as helpers, and switch automations that set or test the `none`
+> preset to the `off` HVAC mode. Thermostats created from the UI migrate
+> automatically.
+
+## 🚀 Quick Start
+
+1. Go to **Settings** → **Devices & services** → [**Helpers**](https://my.home-assistant.io/redirect/helpers/)
+2. **Create helper** → **Pilot Wire Thermostat**
+3. **Select the module's pilot wire select** (required) - a `select` or an `input_select`
+4. **(Optional)** Pick a temperature sensor, a humidity sensor and a power sensor
+5. **(Optional)** Set the power threshold, the default preset, and whether to offer the Comfort -1 °C and -2 °C presets
+
+The thermostat appears on the module's device, named after it.
+
+## 🔧 Options
+
+| Option | Default | Description |
+| :----- | :------ | :---------- |
+| Select entity | required | The module's pilot wire `select` or `input_select` |
+| Temperature sensor | none | Shown as the current temperature, in the sensor's unit |
+| Humidity sensor | none | Shown as the current humidity |
+| Power sensor | none | Tells heating from idle |
+| Additional modes | on | Offer Comfort -1 °C and Comfort -2 °C when the select has them |
+| Power threshold | 0 W | Power above which the heater counts as heating |
+| Default preset | Comfort | Preset used to turn on a thermostat that has no previous preset |
+
+## 🧠 How It Works
+
+The thermostat is a view over the select: the only thing it keeps of its own is the last preset.
+
+| Select option | Thermostat |
+| :------------ | :--------- |
+| `comfort`, `Comfort` | Heat, Comfort |
+| `comfort_-1`, `ComfortMinus1` | Heat, Comfort -1 °C |
+| `comfort_-2`, `ComfortMinus2` | Heat, Comfort -2 °C |
+| `eco`, `Eco` | Heat, Eco |
+| `frost_protection`, `FrostProtection` | Heat, Frost protection (`away`) |
+| `off`, `Off` | Off |
+
+- **Setting a preset** selects the matching option, which also turns an off thermostat on
+- **Turning on** restores the last preset, or the default preset when there is none; turning on a thermostat that is already heating sends nothing
+- **Heating status** is `heating` above the power threshold and `idle` below it, and `off` whenever the thermostat is off, with or without a power sensor
+- **An unknown option** is shown as Comfort and logged as a warning
+
+## 🔌 Compatibility
+
+Any module exposing its pilot wire mode as a select with the options above, including:
+
 - **Equation**: SIN-4-FP-21_EQU
 - **Legrand**: 064882
 - **NodOn**: SIN-4-FP-20, SIN-4-FP-21
 
-## Installation
+## ⚙️ Technical Details
 
-### Option 1: Using HACS (Home Assistant Community Store)
-[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=Diaoul&repository=ha-pilot-wire-climate&category=integration)
+- **No Polling:** The thermostat only reacts to state changes of its select and sensors
+- **Startup:** Sources are read once Home Assistant has started
+- **Restart Recovery:** The last preset is stored, so turning on after a restart goes back to it
+- **Removal:** Deleting the helper unhides the select, unless you hid it yourself
 
-1. Use the button above or search for "Wire Pilot Climate" in HACS
-2. Download the integration and restart Home Assistant
+## 🤝 Support
 
-### Option 2: Manual Installation
-1. Copy the integration files to your Home Assistant custom components directory.
-2. Restart Home Assistant.
-3. Add the integration through the Home Assistant UI.
+If you encounter issues:
+- Enable debug logging for `custom_components.pilot_wire_climate` and check the logs
+- Check the select's options in **Developer Tools** → **States**
+- Open an issue on [GitHub](https://github.com/Diaoul/hass-pilot-wire-climate/issues)
 
-## Configuration
-This integration is set up from the Home Assistant UI only.
-
-> [!IMPORTANT]  
-> This integration is implemented as a **Helper** in Home Assistant and is not a full-fledged custom integration. 
-> 
-> To initialize this helper, follow this path in your Home Assistant interface:
-> 1. Settings
-> 2. Devices and Services
-> 3. Helpers
-> 4. Create Helper
-> 5. Pilot Wire Thermostat
->
-> Once configured, the climate entity will appear in the Helpers tab. It will be automatically linked to the device of the select entity you chose during setup.
-
-
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to:
-- 🐛 Report bugs
-- 💡 Suggest improvements
-- 🔀 Submit pull requests
+---
 
 ## 📄 License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
-If you find this integration helpful, please consider giving it a ⭐️ on GitHub!
+
+Forked from [faizpuru/ha-pilot-wire-climate](https://github.com/faizpuru/ha-pilot-wire-climate), made with ❤️ for the Home Assistant community
