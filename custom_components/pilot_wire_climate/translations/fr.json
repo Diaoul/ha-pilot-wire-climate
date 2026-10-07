@@ -24,6 +24,10 @@
           "default_preset": "Mode utilisé pour allumer un thermostat qui n'a pas de mode précédent auquel revenir."
         }
       }
+    },
+    "error": {
+      "default_preset_not_offered": "Le mode par défaut doit être un mode proposé par le thermostat : activez les modes supplémentaires ou choisissez un autre mode par défaut.",
+      "default_preset_missing": "Le select n'a pas d'option pour le mode par défaut."
     }
   },
   "options": {
@@ -48,6 +52,10 @@
           "default_preset": "Mode utilisé pour allumer un thermostat qui n'a pas de mode précédent auquel revenir."
         }
       }
+    },
+    "error": {
+      "default_preset_not_offered": "Le mode par défaut doit être un mode proposé par le thermostat : activez les modes supplémentaires ou choisissez un autre mode par défaut.",
+      "default_preset_missing": "Le select n'a pas d'option pour le mode par défaut."
     }
   },
   "exceptions": {

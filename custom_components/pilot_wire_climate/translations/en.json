@@ -24,6 +24,10 @@
           "default_preset": "Preset used to turn on a thermostat that has no previous preset to go back to."
         }
       }
+    },
+    "error": {
+      "default_preset_not_offered": "The default preset must be one the thermostat offers: turn on the additional modes, or pick another default preset.",
+      "default_preset_missing": "The select has no option for the default preset."
     }
   },
   "options": {
@@ -48,6 +52,10 @@
           "default_preset": "Preset used to turn on a thermostat that has no previous preset to go back to."
         }
       }
+    },
+    "error": {
+      "default_preset_not_offered": "The default preset must be one the thermostat offers: turn on the additional modes, or pick another default preset.",
+      "default_preset_missing": "The select has no option for the default preset."
     }
   },
   "exceptions": {

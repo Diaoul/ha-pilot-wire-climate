@@ -1,10 +1,12 @@
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.helpers import device_registry as dr, entity_registry as er
+import pytest
 
 from custom_components.pilot_wire_climate.const import DOMAIN
 
 from .conftest import (
+    FOUR_OPTIONS,
     POWER,
     SELECT,
     SIX_OPTIONS,
@@ -135,3 +137,46 @@ async def test_change_option_reloads(hass: HomeAssistant, select_entity):
 
     assert hass.states.get(entity_id).attributes["hvac_action"] == "idle"
     assert er.async_get(hass).async_get(SELECT).hidden_by is None
+
+
+async def configure(hass: HomeAssistant, **options: object):
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": "user"}
+    )
+    return await hass.config_entries.flow.async_configure(result["flow_id"], options)
+
+
+@pytest.mark.parametrize("default_preset", ["comfort_1", "comfort_2"])
+async def test_default_preset_must_be_offered(
+    hass: HomeAssistant, select_entity, default_preset
+):
+    result = await configure(
+        hass, select=SELECT, additional_modes=False, default_preset=default_preset
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "default_preset_not_offered"}
+
+
+async def test_default_preset_needs_an_option(hass: HomeAssistant, select_entity):
+    hass.states.async_set(SELECT, "comfort", {"options": FOUR_OPTIONS})
+
+    result = await configure(hass, select=SELECT, default_preset="comfort_1")
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "default_preset_missing"}
+
+
+async def test_options_flow_validates(hass: HomeAssistant, select_entity):
+    entry = helper_entry()
+    await setup_helper(hass, entry)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        {**entry.options, "additional_modes": False, "default_preset": "comfort_1"},
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "default_preset_not_offered"}
+    assert entry.options["additional_modes"] is True

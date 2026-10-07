@@ -50,7 +50,7 @@ Le thermostat apparaît sur l'appareil du module, sous son nom.
 | Capteur de puissance | aucun | Distingue la chauffe du repos |
 | Modes supplémentaires | activé | Propose Confort -1 °C et Confort -2 °C quand le select les a |
 | Seuil de puissance | 0 W | Puissance au-delà de laquelle le radiateur est considéré en chauffe |
-| Mode par défaut | Confort | Mode utilisé pour allumer un thermostat qui n'a pas de mode précédent |
+| Mode par défaut | Confort | Mode utilisé pour allumer un thermostat qui n'a pas de mode précédent ; doit exister dans le select et être proposé par le thermostat |
 
 ## 🧠 Fonctionnement
 

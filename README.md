@@ -50,7 +50,7 @@ The thermostat appears on the module's device, named after it.
 | Power sensor | none | Tells heating from idle |
 | Additional modes | on | Offer Comfort -1 °C and Comfort -2 °C when the select has them |
 | Power threshold | 0 W | Power above which the heater counts as heating |
-| Default preset | Comfort | Preset used to turn on a thermostat that has no previous preset |
+| Default preset | Comfort | Preset used to turn on a thermostat that has no previous preset; must be one the select has and the thermostat offers |
 
 ## 🧠 How It Works
 
