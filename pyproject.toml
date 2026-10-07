@@ -15,7 +15,7 @@ files = ["custom_components"]
 implicit_reexport = true
 
 [tool.ruff.lint]
-extend-select = ["PT"]
+extend-select = ["G", "PT", "T20"]
 # Home Assistant's entity and flow class attributes are mutable lists and dicts.
 extend-ignore = ["RUF012"]
 
