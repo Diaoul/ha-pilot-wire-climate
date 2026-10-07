@@ -110,17 +110,9 @@ async def validate_options(
     return user_input
 
 
-CONFIG_FLOW = {
-    "user": SchemaFlowFormStep(
-        probatio.Schema(OPTIONS_SCHEMA), validate_user_input=validate_options
-    ),
-}
-
-OPTIONS_FLOW = {
-    "init": SchemaFlowFormStep(
-        probatio.Schema(OPTIONS_SCHEMA), validate_user_input=validate_options
-    ),
-}
+OPTIONS_STEP = SchemaFlowFormStep(
+    probatio.Schema(OPTIONS_SCHEMA), validate_user_input=validate_options
+)
 
 
 class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
@@ -129,8 +121,8 @@ class ConfigFlowHandler(SchemaConfigFlowHandler, domain=DOMAIN):
     VERSION = 1
     MINOR_VERSION = 6
 
-    config_flow = CONFIG_FLOW
-    options_flow = OPTIONS_FLOW
+    config_flow = {"user": OPTIONS_STEP}
+    options_flow = {"init": OPTIONS_STEP}
     options_flow_reloads = True
 
     @override
