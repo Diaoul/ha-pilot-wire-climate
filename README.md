@@ -67,7 +67,7 @@ The thermostat is a view over the select: the only thing it keeps of its own is 
 
 - **Setting a preset** selects the matching option, which also turns an off thermostat on; setting the current preset sends nothing
 - **Turning on** restores the last preset, or the default preset when there is none; turning on a thermostat that is already heating sends nothing
-- **Heating status** is `heating` above the power threshold and `idle` below it, and `off` whenever the thermostat is off, with or without a power sensor
+- **Heating status** is `heating` above the power threshold, even when the thermostat is off, which shows a module ignoring off. Otherwise it is `off` while the thermostat is off, with or without a power sensor, and `idle` below the threshold
 - **An unknown option**, or one for a preset that is not offered, shows heat with no preset; an unknown one is also logged as a warning
 
 ## 🔌 Compatibility
