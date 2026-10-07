@@ -14,7 +14,6 @@ from homeassistant.components.climate import (
     HVACMode,
 )
 from homeassistant.components.select import ATTR_OPTIONS, SERVICE_SELECT_OPTION
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     ATTR_ENTITY_ID,
     ATTR_UNIT_OF_MEASUREMENT,
@@ -34,7 +33,7 @@ from homeassistant.core import (
 )
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.device import async_entity_id_to_device
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers.restore_state import (
     ExtraStoredData,
@@ -42,6 +41,7 @@ from homeassistant.helpers.restore_state import (
     RestoreEntity,
 )
 
+from . import PilotWireConfigEntry
 from .const import (
     CONF_ADDITIONAL_MODES,
     CONF_DEFAULT_PRESET,
@@ -61,11 +61,13 @@ from .util import get_value_key
 
 _LOGGER = logging.getLogger(__name__)
 
+PARALLEL_UPDATES = 0
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
+    config_entry: PilotWireConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
     """Initialize config entry."""
     options = config_entry.options
@@ -106,7 +108,13 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
     """Representation of a Pilot Wire device."""
 
     _attr_has_entity_name = True
+    _attr_hvac_modes = [HVACMode.HEAT, HVACMode.OFF]
     _attr_should_poll = False
+    _attr_supported_features = (
+        ClimateEntityFeature.PRESET_MODE
+        | ClimateEntityFeature.TURN_OFF
+        | ClimateEntityFeature.TURN_ON
+    )
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_translation_key: str = "pilot_wire"
 
@@ -221,16 +229,6 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
 
     @override
     @property
-    def supported_features(self) -> ClimateEntityFeature:
-        """Return the list of supported features."""
-        return (
-            ClimateEntityFeature.PRESET_MODE
-            | ClimateEntityFeature.TURN_OFF
-            | ClimateEntityFeature.TURN_ON
-        )
-
-    @override
-    @property
     def hvac_action(self) -> HVACAction | None:
         """Return the current running hvac operation."""
         if self._cur_power is not None and self._cur_power > self.power_threshold:
@@ -289,12 +287,6 @@ class PilotWireClimate(ClimateEntity, RestoreEntity):
         await self._async_set_mode_value(self._get_option(PRESET_TO_VALUE[preset_mode]))
 
     # Modes
-
-    @override
-    @property
-    def hvac_modes(self) -> list[HVACMode]:
-        """List of available operation modes."""
-        return [HVACMode.HEAT, HVACMode.OFF]
 
     @override
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
