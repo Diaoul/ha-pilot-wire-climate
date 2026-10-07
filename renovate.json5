@@ -7,13 +7,10 @@
     "helpers:pinGitHubActionDigestsToSemver",
     ":semanticCommits",
   ],
-  "pre-commit": {
-    enabled: true,
-  },
   packageRules: [
     {
       groupName: "linters",
-      matchPackageNames: ["ruff", "mypy", "astral-sh/ruff-pre-commit"],
+      matchPackageNames: ["ruff", "mypy"],
       automerge: true,
     },
     {
