@@ -6,12 +6,12 @@
         "title": "Add Pilot Wire Thermostat",
         "description": "Create a climate entity that controls a pilot wire module. \n\n Once configured, the climate entity will appear in the Helpers tab. It will be automatically linked to the device of the select entity you chose during setup.",
         "data": {
-          "select": "Select Entity",
-          "temperature_sensor": "Temperature Sensor",
-          "humidity_sensor": "Humidity Sensor",
-          "power_sensor": "Power Sensor",
-          "additional_modes": "Additional Modes",
-          "power_threshold": "Power Threshold",
+          "select": "Select entity",
+          "temperature_sensor": "Temperature sensor",
+          "humidity_sensor": "Humidity sensor",
+          "power_sensor": "Power sensor",
+          "additional_modes": "Additional modes",
+          "power_threshold": "Power threshold",
           "default_preset": "Default preset"
         },
         "data_description": {
@@ -36,12 +36,12 @@
     "step": {
       "init": {
         "data": {
-          "select": "Select Entity",
-          "temperature_sensor": "Temperature Sensor",
-          "humidity_sensor": "Humidity Sensor",
-          "power_sensor": "Power Sensor",
-          "additional_modes": "Additional Modes",
-          "power_threshold": "Power Threshold",
+          "select": "Select entity",
+          "temperature_sensor": "Temperature sensor",
+          "humidity_sensor": "Humidity sensor",
+          "power_sensor": "Power sensor",
+          "additional_modes": "Additional modes",
+          "power_threshold": "Power threshold",
           "default_preset": "Default preset"
         },
         "data_description": {
