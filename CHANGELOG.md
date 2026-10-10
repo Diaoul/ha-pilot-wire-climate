@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/Diaoul/hass-pilot-wire-climate/compare/3.0.0...3.0.1) (2026-10-10)
+
+
+### Bug Fixes
+
+* write the English form labels in sentence case ([cc3a34d](https://github.com/Diaoul/hass-pilot-wire-climate/commit/cc3a34df006dc1b77d10a2bc3e9e1cab18d92cc0))
+
 ## [3.0.0](https://github.com/Diaoul/hass-pilot-wire-climate/compare/2.3.0...3.0.0) (2026-10-07)
 
 
